@@ -150,7 +150,8 @@ export default function LoginPage() {
   };
 
   const handleGoBack = () => {
-    router.back(); // Navigates back to the previous page
+    // router.back(); // Navigates back to the previous page
+    router.push("/")
   };
 
   return (

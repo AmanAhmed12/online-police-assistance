@@ -5,7 +5,7 @@ import EmailIcon from "@mui/icons-material/Email";
 
 export default function ContactUs() {
   return (
-    <Container maxWidth="md" sx={{ mt: 6, mb: 6 }}>
+    <section className="container"  style={{ marginTop: 6, marginBottom: 6 }}>
       <Typography variant="h4" align="center" fontWeight={700} gutterBottom>
         Contact Us
       </Typography>
@@ -57,7 +57,30 @@ export default function ContactUs() {
             </Button>
           </CardContent>
         </Card>
+
+         <Card sx={{ flex: 1, minWidth: 250, bgcolor: "#1f2433", color: "#f5f7ff", borderRadius: 3 }}>
+          <CardContent>
+            <Box display="flex" alignItems="center" gap={2} mb={2}>
+              <Avatar sx={{ bgcolor: "#2866f2" }}>
+                <PhoneIcon />
+              </Avatar>
+              <Typography variant="h6" fontWeight={600}>
+                Website
+              </Typography>
+            </Box>
+            <Typography variant="body1">Srilanka Police</Typography>
+            <Button
+              variant="contained"
+              color="primary"
+              sx={{ mt: 2, bgcolor: "#2866f2" }}
+              target="_blank"
+              href="https://www.police.lk/"
+            >
+              Visit Now
+            </Button>
+          </CardContent>
+        </Card>
       </Stack>
-    </Container>
+    </section>
   );
 }

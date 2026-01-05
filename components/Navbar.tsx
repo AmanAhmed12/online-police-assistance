@@ -18,7 +18,7 @@ export default function Navbar() {
             <Link href="/Login" aria-label="Sign In">
               <button className="btn-signin">Sign In</button>
             </Link>
-            <Link href="#" aria-label="Get Started">
+            <Link href="Register" aria-label="Get Started">
               <button className="btn-getstarted">Get Started</button>
             </Link>
           </div>

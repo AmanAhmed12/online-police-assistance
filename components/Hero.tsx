@@ -16,7 +16,13 @@ export default function Hero() {
             </p>
             <div className="buttons">
               <button className="btn-primary">Report an Incident</button>
-              <button className="btn-secondary">Learn More</button>
+              <a
+                href="https://www.police.lk/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <button className="btn-secondary">Learn More</button>
+              </a>
             </div>
           </div>
         </div>
