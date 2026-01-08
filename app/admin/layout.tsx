@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { ThemeProvider, CssBaseline, Box } from "@mui/material";
-import { adminTheme } from "@/components/admin/AdminTheme"; // Adjust path if necessary
+import { darkTheme } from "@/components/theme"; // Adjust path if necessary
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminTopbar from "@/components/admin/AdminTopbar";
 
@@ -14,7 +14,7 @@ export default function AdminLayout({
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     return (
-        <ThemeProvider theme={adminTheme}>
+        <ThemeProvider theme={darkTheme}>
             <CssBaseline />
             <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: 'background.default' }}>
                 {/* Sidebar */}
