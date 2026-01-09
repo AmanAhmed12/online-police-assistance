@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { FaTwitter, FaFacebookF, FaInstagram } from "react-icons/fa";
+import { Twitter, Facebook, Instagram } from "@mui/icons-material";
 import { Button } from "@mui/material";
 
 export default function Footer() {
@@ -59,9 +59,9 @@ export default function Footer() {
         <div className="footer-col">
           <div className="footer-title">Follow</div>
           <div className="socials">
-            <FaTwitter aria-label="twitter" />
-            <FaFacebookF aria-label="facebook" />
-            <FaInstagram aria-label="instagram" />
+            <Twitter aria-label="twitter" />
+            <Facebook aria-label="facebook" />
+            <Instagram aria-label="instagram" />
           </div>
         </div>
       </div>
