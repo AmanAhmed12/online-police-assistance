@@ -100,6 +100,9 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const [fullName, setFullName] = useState("");
+  const [nic, setNic] = useState("");
+
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -113,7 +116,7 @@ export default function RegisterPage() {
       return;
     }
 
-    console.log({ email, username, password });
+    console.log({ fullName, nic, email, username, password });
     alert("Register successful (demo)");
   };
 
@@ -134,125 +137,163 @@ export default function RegisterPage() {
         <Paper
           sx={{
             p: { xs: 3, sm: 4 },
-            maxWidth: 420,
+            maxWidth: 500,
             width: "100%",
             position: "relative",
           }}
         >
           <IconButton
             onClick={() => router.push("/")}
-            sx={{ position: "absolute", top: 16, left: 16 }}
+            sx={{ position: "absolute", top: 8, left: 8 }}
           >
             <KeyboardBackspaceIcon />
           </IconButton>
 
-          <Box textAlign="center" mb={3}>
-            <LockOutlinedIcon sx={{ fontSize: 44, color: "primary.main" }} />
-            <Typography variant="h5" mt={1}>
+          <Box textAlign="center" mb={2}>
+            <LockOutlinedIcon sx={{ fontSize: 36, color: "primary.main" }} />
+            <Typography variant="h5" mt={0.5}>
               Create Account
             </Typography>
-            <Typography variant="subtitle1">
+            <Typography variant="subtitle2">
               Register to get started
             </Typography>
           </Box>
 
           <form onSubmit={handleSubmit}>
-            <TextField
-              fullWidth
-              label="Email"
-              type="email"
-              margin="normal"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <EmailOutlinedIcon />
-                  </InputAdornment>
-                ),
-              }}
-            />
+            <Box display="flex" gap={2}>
+              <TextField
+                fullWidth
+                label="Full Name"
+                margin="dense"
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PersonOutlineIcon />
+                    </InputAdornment>
+                  ),
+                }}
+              />
 
-            <TextField
-              fullWidth
-              label="Username"
-              margin="normal"
-              required
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <PersonOutlineIcon />
-                  </InputAdornment>
-                ),
-              }}
-            />
+              <TextField
+                fullWidth
+                label="NIC"
+                margin="dense"
+                required
+                value={nic}
+                onChange={(e) => setNic(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PersonOutlineIcon />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Box>
 
-            <TextField
-              fullWidth
-              label="Password"
-              type={showPassword ? "text" : "password"}
-              margin="normal"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <LockOutlinedIcon />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton onClick={() => setShowPassword(!showPassword)}>
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
+            <Box display="flex" gap={2}>
+              <TextField
+                fullWidth
+                label="Username"
+                margin="dense"
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PersonOutlineIcon />
+                    </InputAdornment>
+                  ),
+                }}
+              />
 
-            <TextField
-              fullWidth
-              label="Confirm Password"
-              type={showConfirmPassword ? "text" : "password"}
-              margin="normal"
-              required
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <LockOutlinedIcon />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() =>
-                        setShowConfirmPassword(!showConfirmPassword)
-                      }
-                    >
-                      {showConfirmPassword ? (
-                        <VisibilityOff />
-                      ) : (
-                        <Visibility />
-                      )}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
+              <TextField
+                fullWidth
+                label="Email"
+                type="email"
+                margin="dense"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <EmailOutlinedIcon />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Box>
 
-            <Box textAlign="right" mt={1}>
-              <Link href="/ForgotPassword" underline="hover">
+            <Box display="flex" gap={2}>
+              <TextField
+                fullWidth
+                label="Password"
+                type={showPassword ? "text" : "password"}
+                margin="dense"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LockOutlinedIcon />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={() => setShowPassword(!showPassword)}>
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+
+              <TextField
+                fullWidth
+                label="Confirm Password"
+                type={showConfirmPassword ? "text" : "password"}
+                margin="dense"
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LockOutlinedIcon />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
+                      >
+                        {showConfirmPassword ? (
+                          <VisibilityOff />
+                        ) : (
+                          <Visibility />
+                        )}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Box>
+
+            <Box textAlign="right" mt={0.5}>
+              <Link href="/ForgotPassword" underline="hover" variant="body2">
                 Forgot password?
               </Link>
             </Box>
 
-            <Button variant="contained" fullWidth type="submit" sx={{ mt: 3 }}>
+            <Button variant="contained" fullWidth type="submit" sx={{ mt: 2 }}>
               Register
             </Button>
           </form>
