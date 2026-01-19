@@ -111,6 +111,8 @@ const darkTheme = createTheme({
   },
 });
 
+import { registerUser } from "@/services/authService";
+
 export default function RegisterPage() {
   const router = useRouter();
 
@@ -154,38 +156,24 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
-      const response = await fetch(`${baseUrl}/api/auth/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          fullName,
-          nic,
-          username,
-          email,
-          password,
-          role: "CITIZEN",
-        }),
+      await registerUser({
+        fullName,
+        nic,
+        username,
+        email,
+        password,
+        role: "CITIZEN",
       });
 
-      if (response.ok) {
-        setDialogTitle("Success");
-        setDialogMessage("Registration successful! Please login.");
-        setIsSuccess(true);
-        setDialogOpen(true);
-      } else {
-        const errorData = await response.text();
-        setDialogTitle("Registration Failed");
-        setDialogMessage(errorData || "Something went wrong.");
-        setIsSuccess(false);
-        setDialogOpen(true);
-      }
-    } catch (error) {
+      setDialogTitle("Success");
+      setDialogMessage("Registration successful! Please login.");
+      setIsSuccess(true);
+      setDialogOpen(true);
+
+    } catch (error: any) {
       console.error("Registration error:", error);
-      setDialogTitle("Error");
-      setDialogMessage("An error occurred during registration.");
+      setDialogTitle("Registration Failed");
+      setDialogMessage(error.message || "Something went wrong.");
       setIsSuccess(false);
       setDialogOpen(true);
     } finally {

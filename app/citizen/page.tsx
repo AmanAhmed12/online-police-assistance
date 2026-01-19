@@ -1,3 +1,4 @@
+"use client";
 import React from 'react';
 import { Typography, Box, Paper, Button } from '@mui/material';
 import Grid from '@mui/material/Grid';
@@ -12,15 +13,19 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 // For now, let's create a local simple StatCard or import the admin one if the path allows. 
 // Importing from admin components is fine for MVP.
 import StatCard from '@/components/admin/StatCard';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/lib/store';
 
 export default function CitizenDashboardPage() {
+    const user = useSelector((state: RootState) => state.auth.user);
+
     return (
         <Box>
             {/* Page Header */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
                 <Box>
                     <Typography variant="h4" fontWeight="bold" gutterBottom>
-                        Welcome, Citizen
+                        Welcome, {user?.fullName || user?.username || "Citizen"}
                     </Typography>
                     <Typography variant="body1" color="textSecondary">
                         Manage your complaints and view status updates.

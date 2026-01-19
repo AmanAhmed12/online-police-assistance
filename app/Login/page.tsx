@@ -13,32 +13,75 @@ import {
   createTheme,
   ThemeProvider,
   CssBaseline,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import KeyboardBackspaceIcon from "@mui/icons-material/KeyboardBackspace";
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { useRouter } from "next/navigation"; // Assuming Next.js for navigation
 
 // Define your custom dark blue and white theme for Material-UI
+import { loginUser } from "@/services/authService";
 import { darkTheme } from "@/components/theme";
+import { useDispatch } from "react-redux";
+import { login } from "@/lib/features/auth/authSlice";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter(); // Initialize useRouter for navigation
+  const dispatch = useDispatch();
+
+  // Dialog State
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState("");
+  const [dialogMessage, setDialogMessage] = useState("");
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const handleTogglePassword = () => setShowPassword((show) => !show);
 
-  const handleSubmit = (e: any) => {
-    e.preventDefault();
-    // Handle login logic here (e.g., API call)
-    console.log("Email:", email);
-    console.log("Password:", password);
-    alert('Login attempt with: ' + email + ' and ' + password); // Simple alert for demonstration
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+    if (isSuccess) {
+      router.push("/citizen");
+    }
   };
+
+
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
+    try {
+      const data = await loginUser({ username, password });
+
+      console.log("Login success:", data);
+
+      // Save user to Redux store
+      dispatch(login(data));
+
+      setDialogTitle("Success");
+      setDialogMessage("Login Successful!");
+      setIsSuccess(true);
+      setDialogOpen(true);
+
+    } catch (error: any) {
+      console.error("Login failed or Error:", error);
+      setDialogTitle("Login Failed");
+      setDialogMessage(error.message || "Invalid credentials");
+      setIsSuccess(false);
+      setDialogOpen(true);
+    }
+  };
+
+
 
   const handleGoBack = () => {
     // router.back(); // Navigates back to the previous page
@@ -102,13 +145,12 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit}>
             <TextField
               fullWidth
-              label="Email"
+              label="Username"
               variant="outlined"
               margin="normal"
-              type="email"
               required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -163,6 +205,34 @@ export default function LoginPage() {
             </a>
           </Typography>
         </Paper>
+
+        <Dialog
+          open={dialogOpen}
+          onClose={handleCloseDialog}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <Box display="flex" flexDirection="column" alignItems="center" p={2}>
+            {isSuccess ? (
+              <CheckCircleOutlineIcon sx={{ fontSize: 60, color: "green", mb: 2 }} />
+            ) : (
+              <ErrorOutlineIcon sx={{ fontSize: 60, color: "red", mb: 2 }} />
+            )}
+            <DialogTitle id="alert-dialog-title" sx={{ p: 0, mb: 1 }}>
+              {dialogTitle}
+            </DialogTitle>
+            <DialogContent>
+              <DialogContentText id="alert-dialog-description" align="center">
+                {dialogMessage}
+              </DialogContentText>
+            </DialogContent>
+            <DialogActions sx={{ width: '100%', justifyContent: 'center' }}>
+              <Button onClick={handleCloseDialog} variant="contained" autoFocus>
+                OK
+              </Button>
+            </DialogActions>
+          </Box>
+        </Dialog>
       </Box>
     </ThemeProvider>
   );
