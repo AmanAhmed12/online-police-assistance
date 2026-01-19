@@ -1,5 +1,6 @@
 "use client";
 
+import ReactMarkdown from 'react-markdown';
 import React, { useState, useRef, useEffect } from 'react';
 import {
     Box,
@@ -166,15 +167,25 @@ export default function AIChatPage() {
                         <Avatar sx={{ bgcolor: msg.sender === 'user' ? 'primary.main' : 'secondary.main', color: msg.sender === 'ai' ? 'primary.main' : 'white' }}>
                             {msg.sender === 'user' ? <PersonIcon /> : <SmartToyIcon />}
                         </Avatar>
+
                         <Paper
                             sx={{
                                 p: 2,
                                 bgcolor: msg.sender === 'user' ? 'primary.main' : 'rgba(255,255,255,0.05)',
                                 color: msg.sender === 'user' ? 'white' : 'text.primary',
-                                borderRadius: msg.sender === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px'
+                                borderRadius: msg.sender === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                                '& h3': { color: '#6699ff', marginTop: 1, marginBottom: 0.5, fontSize: '1.1rem' },
+                                '& strong': { color: '#ff9100' },
+                                '& ul': { paddingLeft: 2 },
+                                '& li': { marginBottom: 0.5 },
+                                '& blockquote': { borderLeft: '4px solid #3a415a', paddingLeft: 2, fontStyle: 'italic', color: '#a0a4b7' }
                             }}
                         >
-                            <Typography variant="body1">{msg.text}</Typography>
+                            {msg.sender === 'ai' ? (
+                                <ReactMarkdown>{msg.text}</ReactMarkdown>
+                            ) : (
+                                <Typography variant="body1">{msg.text}</Typography>
+                            )}
                             <Typography variant="caption" sx={{ opacity: 0.7, display: 'block', mt: 0.5, textAlign: 'right' }}>
                                 {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </Typography>
