@@ -12,6 +12,11 @@ import {
   ThemeProvider,
   CssBaseline,
   Link,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
@@ -19,6 +24,8 @@ import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import KeyboardBackspaceIcon from "@mui/icons-material/KeyboardBackspace";
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { useRouter } from "next/navigation";
 
 /* ===== Theme (UNCHANGED) ===== */
@@ -91,6 +98,16 @@ const darkTheme = createTheme({
         },
       },
     },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: "#1f2433",
+          backgroundImage: "none",
+          borderRadius: 16,
+          border: "1px solid #3a415a",
+        },
+      },
+    },
   },
 });
 
@@ -108,16 +125,72 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const handleSubmit = (e: any) => {
+  const [loading, setLoading] = useState(false);
+
+  // Dialog State
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState("");
+  const [dialogMessage, setDialogMessage] = useState("");
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+    if (isSuccess) {
+      router.push("/Login");
+    }
+  };
+
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      alert("Passwords do not match");
+      setDialogTitle("Error");
+      setDialogMessage("Passwords do not match");
+      setIsSuccess(false);
+      setDialogOpen(true);
       return;
     }
 
-    console.log({ fullName, nic, email, username, password });
-    alert("Register successful (demo)");
+    setLoading(true);
+
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+      const response = await fetch(`${baseUrl}/api/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fullName,
+          nic,
+          username,
+          email,
+          password,
+          role: "CITIZEN",
+        }),
+      });
+
+      if (response.ok) {
+        setDialogTitle("Success");
+        setDialogMessage("Registration successful! Please login.");
+        setIsSuccess(true);
+        setDialogOpen(true);
+      } else {
+        const errorData = await response.text();
+        setDialogTitle("Registration Failed");
+        setDialogMessage(errorData || "Something went wrong.");
+        setIsSuccess(false);
+        setDialogOpen(true);
+      }
+    } catch (error) {
+      console.error("Registration error:", error);
+      setDialogTitle("Error");
+      setDialogMessage("An error occurred during registration.");
+      setIsSuccess(false);
+      setDialogOpen(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -293,8 +366,14 @@ export default function RegisterPage() {
               </Link>
             </Box>
 
-            <Button variant="contained" fullWidth type="submit" sx={{ mt: 2 }}>
-              Register
+            <Button
+              variant="contained"
+              fullWidth
+              type="submit"
+              disabled={loading}
+              sx={{ mt: 2 }}
+            >
+              {loading ? "Registering..." : "Register"}
             </Button>
           </form>
 
@@ -305,6 +384,34 @@ export default function RegisterPage() {
             </Link>
           </Typography>
         </Paper>
+
+        <Dialog
+          open={dialogOpen}
+          onClose={handleCloseDialog}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <Box display="flex" flexDirection="column" alignItems="center" p={2}>
+            {isSuccess ? (
+              <CheckCircleOutlineIcon sx={{ fontSize: 60, color: "green", mb: 2 }} />
+            ) : (
+              <ErrorOutlineIcon sx={{ fontSize: 60, color: "red", mb: 2 }} />
+            )}
+            <DialogTitle id="alert-dialog-title" sx={{ p: 0, mb: 1 }}>
+              {dialogTitle}
+            </DialogTitle>
+            <DialogContent>
+              <DialogContentText id="alert-dialog-description" align="center">
+                {dialogMessage}
+              </DialogContentText>
+            </DialogContent>
+            <DialogActions sx={{ width: '100%', justifyContent: 'center' }}>
+              <Button onClick={handleCloseDialog} variant="contained" autoFocus>
+                OK
+              </Button>
+            </DialogActions>
+          </Box>
+        </Dialog>
       </Box>
     </ThemeProvider>
   );
