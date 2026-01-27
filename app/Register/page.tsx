@@ -163,6 +163,7 @@ export default function RegisterPage() {
         email,
         password,
         role: "CITIZEN",
+        status: "ACTIVE",
       });
 
       setDialogTitle("Success");

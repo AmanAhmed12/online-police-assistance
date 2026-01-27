@@ -19,6 +19,11 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import SearchIcon from "@mui/icons-material/Search";
 import { styled, alpha } from '@mui/material/styles';
 import InputBase from '@mui/material/InputBase';
+import { useDispatch, useSelector } from 'react-redux';
+import { useRouter } from 'next/navigation';
+import { logout } from '@/lib/features/auth/authSlice';
+import { logoutUser } from '@/app/services/authService';
+import { RootState } from "@/lib/store";
 
 const Search = styled('div')(({ theme }) => ({
     position: 'relative',
@@ -67,6 +72,11 @@ interface CitizenTopbarProps {
 
 export default function CitizenTopbar({ onSidebarOpen }: CitizenTopbarProps) {
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+    const dispatch = useDispatch();
+    const router = useRouter();
+    const token = useSelector(
+        (state: RootState) => state.auth.user?.token
+    );
 
     const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
@@ -74,6 +84,21 @@ export default function CitizenTopbar({ onSidebarOpen }: CitizenTopbarProps) {
 
     const handleMenuClose = () => {
         setAnchorEl(null);
+    };
+
+
+    const handleLogout = async () => {
+        try {
+            if (!token) return;
+            await logoutUser(token);
+            dispatch(logout());
+            router.push('/Login');
+        } catch (error) {
+            console.error('Logout failed:', error);
+            // Still logout from frontend even if backend fails
+            dispatch(logout());
+            router.push('/Login');
+        }
     };
 
     return (
@@ -157,7 +182,7 @@ export default function CitizenTopbar({ onSidebarOpen }: CitizenTopbarProps) {
                             <MenuItem onClick={handleMenuClose}>My Profile</MenuItem>
                             <MenuItem onClick={handleMenuClose}>My Complaints</MenuItem>
                             <Divider />
-                            <MenuItem onClick={handleMenuClose} sx={{ color: 'error.main' }}>Logout</MenuItem>
+                            <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>Logout</MenuItem>
                         </Menu>
                     </Box>
                 </Stack>

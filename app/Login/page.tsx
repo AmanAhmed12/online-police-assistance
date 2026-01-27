@@ -31,7 +31,7 @@ import { useRouter } from "next/navigation"; // Assuming Next.js for navigation
 // Define your custom dark blue and white theme for Material-UI
 import { loginUser } from "@/services/authService";
 import { darkTheme } from "@/components/theme";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { login } from "@/lib/features/auth/authSlice";
 
 export default function LoginPage() {
@@ -46,13 +46,21 @@ export default function LoginPage() {
   const [dialogTitle, setDialogTitle] = useState("");
   const [dialogMessage, setDialogMessage] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
+  const role = useSelector((state: any) => state.auth.user?.role);
 
   const handleTogglePassword = () => setShowPassword((show) => !show);
 
   const handleCloseDialog = () => {
     setDialogOpen(false);
     if (isSuccess) {
-      router.push("/citizen");
+      if (role === "ADMIN") {
+        router.push("/admin");
+      }
+      else if (role === "OFFICER") {
+        router.push("/officer");
+      } else {
+        router.push("/citizen");
+      }
     }
   };
 
