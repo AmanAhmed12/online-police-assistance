@@ -13,7 +13,7 @@ export const adminNavigation = [
     { name: "Active Users", href: "/admin/users", icon: <PeopleIcon /> },
     { name: "Complaints", href: "/admin/complaints", icon: <ReportIcon /> },
     { name: "Case Files", href: "/admin/cases", icon: <AssignmentIcon /> },
-    { name: "Legal Actions", href: "/admin/legal", icon: <GavelIcon /> },
+    { name: "Suspect Details", href: "/admin/suspect-details", icon: <GavelIcon /> },
     { name: "Emergency Contacts", href: "/admin/emergency-contacts", icon: <ContactPhoneIcon /> },
     { name: "Settings", href: "/admin/settings", icon: <SettingsIcon /> },
 ];
