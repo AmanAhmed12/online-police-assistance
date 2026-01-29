@@ -135,7 +135,7 @@
 //     );
 // }
 "use client";
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Typography,
     Box,
@@ -162,55 +162,84 @@ import DownloadIcon from '@mui/icons-material/Download';
 import TimerIcon from '@mui/icons-material/Timer';
 
 import { jsPDF } from 'jspdf';
-
-const totalUsers = 12345;
-const totalComplaints = 3314;
-const solvedComplaints = 2891;
-const activeComplaints = totalComplaints - solvedComplaints;
-const totalOfficers = 35;
-const activeCases = 423;
-const lastWeekComplaints = 380;
-const thisWeekComplaints = 423;
-const emergencyResponseTimes = [4, 6, 5, 7, 3]; // minutes
-
-const users = [
-    { id: 1, name: "John Doe", role: "Officer", status: "Active" },
-    { id: 2, name: "Jane Smith", role: "Officer", status: "Inactive" },
-    { id: 3, name: "Bob Johnson", role: "Admin", status: "Active" },
-];
-
-const complaints = [
-    { id: 101, title: "Theft Complaint", status: "Pending", assignedTo: "John Doe" },
-    { id: 102, title: "Assault Complaint", status: "Solved", assignedTo: "Jane Smith" },
-    { id: 103, title: "Noise Complaint", status: "Pending", assignedTo: "Bob Johnson" },
-];
-
-const cases = [
-    { id: 201, caseName: "Case A", status: "Open", officer: "John Doe" },
-    { id: 202, caseName: "Case B", status: "Closed", officer: "Jane Smith" },
-    { id: 203, caseName: "Case C", status: "Open", officer: "Bob Johnson" },
-];
-
-/* ---------------- MATHEMATICAL CALCULATIONS ---------------- */
-// 1. Resolution Rate
-const resolutionRate = ((solvedComplaints / totalComplaints) * 100).toFixed(1);
-
-// 2. Case Load per Officer
-const avgCaseLoad = (activeCases / totalOfficers).toFixed(1);
-
-// 3. Weekly Growth Rate
-const complaintGrowthRate = (
-    ((thisWeekComplaints - lastWeekComplaints) / lastWeekComplaints) * 100
-).toFixed(1);
-
-// 4. Average Emergency Response Time
-const avgResponseTime = (
-    emergencyResponseTimes.reduce((a, b) => a + b, 0) / emergencyResponseTimes.length
-).toFixed(1);
+import { useSelector } from 'react-redux';
+import { getUsers } from '@/services/authService';
 
 export default function AdminDashboardPage() {
     const [openModal, setOpenModal] = useState(false);
     const [reportType, setReportType] = useState("");
+    const [userData, setUserData] = useState<any[]>([]);
+    const token = useSelector((state: any) => state.auth.user?.token);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+
+
+    const totalUsers = 12345;
+    const totalComplaints = 3314;
+    const solvedComplaints = 2891;
+    const activeComplaints = totalComplaints - solvedComplaints;
+    const totalOfficers = 35;
+    const activeCases = 423;
+    const lastWeekComplaints = 380;
+    const thisWeekComplaints = 423;
+    const emergencyResponseTimes = [4, 6, 5, 7, 3]; // minutes
+
+
+    const complaints = [
+        { id: 101, title: "Theft Complaint", status: "Pending", assignedTo: "John Doe" },
+        { id: 102, title: "Assault Complaint", status: "Solved", assignedTo: "Jane Smith" },
+        { id: 103, title: "Noise Complaint", status: "Pending", assignedTo: "Bob Johnson" },
+    ];
+
+    const cases = [
+        { id: 201, caseName: "Case A", status: "Open", officer: "John Doe" },
+        { id: 202, caseName: "Case B", status: "Closed", officer: "Jane Smith" },
+        { id: 203, caseName: "Case C", status: "Open", officer: "Bob Johnson" },
+    ];
+
+    /* ---------------- MATHEMATICAL CALCULATIONS ---------------- */
+    // 1. Resolution Rate
+    const resolutionRate = ((solvedComplaints / totalComplaints) * 100).toFixed(1);
+
+    // 2. Case Load per Officer
+    const avgCaseLoad = (activeCases / totalOfficers).toFixed(1);
+
+    // 3. Weekly Growth Rate
+    const complaintGrowthRate = (
+        ((thisWeekComplaints - lastWeekComplaints) / lastWeekComplaints) * 100
+    ).toFixed(1);
+
+    // 4. Average Emergency Response Time
+    const avgResponseTime = (
+        emergencyResponseTimes.reduce((a, b) => a + b, 0) / emergencyResponseTimes.length
+    ).toFixed(1);
+
+
+    /* ---------------- API EFFECT ---------------- */
+    useEffect(() => {
+        const loadDashboardData = async () => {
+            // Only fetch if token exists (optional check depending on your PrivateRoute logic)
+            if (!token) {
+                setLoading(false);
+                return;
+            }
+
+            try {
+                setLoading(true);
+                const data = await getUsers(token);
+                setUserData(data);
+                setError(null);
+            } catch (err: any) {
+                setError(err.message || "Failed to fetch users from server.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadDashboardData();
+    }, [token]); // Re-run if token changes
+
 
     const generatePDF = async () => {
         if (!reportType) {
@@ -292,7 +321,7 @@ export default function AdminDashboardPage() {
 
         if (reportType === "User Report") {
             headers = ["ID", "Name", "Role", "Status"];
-            rows = users.map(u => [u.id, u.name, u.role, u.status]);
+            rows = userData.map(u => [u.id, u.fullName, u.role, u.status]);
         } else if (reportType === "Complaints Report") {
             headers = ["ID", "Title", "Status", "Assigned To"];
             rows = complaints.map(c => [c.id, c.title, c.status, c.assignedTo]);
@@ -302,7 +331,7 @@ export default function AdminDashboardPage() {
         } else if (reportType === "Full Stats Report") {
             headers = ["Metric", "Value"];
             rows = [
-                ["Total Users", totalUsers],
+                ["Total Users", userData.length],
                 ["Total Complaints", totalComplaints],
                 ["Solved Complaints", solvedComplaints],
                 ["Active Complaints", activeComplaints],
