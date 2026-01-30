@@ -14,18 +14,19 @@ import {
     NotificationsActive as NoticeIcon,
     Search as SearchIcon,
     CalendarToday as CalendarIcon,
-    Label as LabelIcon
+    Label as LabelIcon,
+    History as HistoryIcon
 } from '@mui/icons-material';
 
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store';
-// Assuming your service is exported from this path
 import {
     getNotices,
     createNotice,
     updateNotice,
     deleteNotice,
-    Notice
+    Notice,
+    NoticeInput
 } from '@/services/noticeService';
 
 export default function NoticePage() {
@@ -39,12 +40,11 @@ export default function NoticePage() {
     const [openDialog, setOpenDialog] = useState(false);
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
     const [currentNotice, setCurrentNotice] = useState<Notice | null>(null);
-    const [loading, setLoading] = useState(false); // For Dialog Actions
-    const [fetching, setFetching] = useState(false); // For initial load
+    const [loading, setLoading] = useState(false);
+    const [fetching, setFetching] = useState(false);
     const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" as "success" | "error" });
 
-    // --- Form State ---
-    const [formData, setFormData] = useState<Omit<Notice, 'id' | 'date'>>({
+    const [formData, setFormData] = useState<NoticeInput>({
         title: '',
         content: '',
         category: 'General'
@@ -74,7 +74,11 @@ export default function NoticePage() {
     const handleOpenDialog = (notice?: Notice) => {
         if (notice) {
             setCurrentNotice(notice);
-            setFormData({ title: notice.title, content: notice.content, category: notice.category });
+            setFormData({
+                title: notice.title,
+                content: notice.content,
+                category: notice.category
+            });
         } else {
             setCurrentNotice(null);
             setFormData({ title: '', content: '', category: 'General' });
@@ -130,9 +134,16 @@ export default function NoticePage() {
         }
     };
 
+    // Helper to format dates safely
+    const formatDate = (dateString?: string) => {
+        if (!dateString) return "";
+        return new Date(dateString).toLocaleDateString(undefined, {
+            year: 'numeric', month: 'short', day: 'numeric'
+        });
+    };
+
     return (
         <Box sx={{ p: { xs: 2, md: 5 }, maxWidth: 1100, margin: '0 auto', minHeight: '100vh' }}>
-
             {/* Header Section */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 5, flexWrap: 'wrap', gap: 3 }}>
                 <Box>
@@ -160,7 +171,7 @@ export default function NoticePage() {
                 </Button>
             </Box>
 
-            {/* Modern Search Bar */}
+            {/* Search Bar */}
             <Paper
                 elevation={0}
                 sx={{
@@ -183,7 +194,7 @@ export default function NoticePage() {
                 />
             </Paper>
 
-            {/* Notices List Container */}
+            {/* List Section */}
             <Paper sx={{ borderRadius: '24px', overflow: 'hidden', border: `1px solid ${theme.palette.divider}` }} elevation={0}>
                 {fetching ? (
                     <Box sx={{ py: 15, textAlign: 'center' }}>
@@ -216,8 +227,8 @@ export default function NoticePage() {
                                     </ListItemAvatar>
 
                                     <ListItemText
-                                        primaryTypographyProps={{ component: 'div' }} // FIX: Hydration Error
-                                        secondaryTypographyProps={{ component: 'div' }} // FIX: Hydration Error
+                                        primaryTypographyProps={{ component: 'div' }}
+                                        secondaryTypographyProps={{ component: 'div' }}
                                         primary={
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1, flexWrap: 'wrap' }}>
                                                 <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary' }}>
@@ -241,15 +252,35 @@ export default function NoticePage() {
                                                 <Typography variant="body1" sx={{ color: 'text.secondary', mb: 2, maxWidth: '800px', lineHeight: 1.7 }}>
                                                     {notice.content}
                                                 </Typography>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, color: 'text.disabled' }}>
-                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                        <CalendarIcon sx={{ fontSize: 18 }} />
-                                                        <Typography variant="caption" sx={{ fontWeight: 600 }}>{notice.date}</Typography>
+
+                                                {/* Meta Info Section */}
+                                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                    {/* Creation Row */}
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, color: 'text.disabled', flexWrap: 'wrap' }}>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                            <CalendarIcon sx={{ fontSize: 16 }} />
+                                                            <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                                                                Posted: {formatDate(notice.createdAt)}
+                                                                {notice.createdBy?.fullName && ` by ${notice.createdBy.fullName}`}
+                                                            </Typography>
+                                                        </Box>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                            <LabelIcon sx={{ fontSize: 16 }} />
+                                                            <Typography variant="caption" sx={{ fontWeight: 600 }}>ID: #{notice.id}</Typography>
+                                                        </Box>
                                                     </Box>
-                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                        <LabelIcon sx={{ fontSize: 18 }} />
-                                                        <Typography variant="caption" sx={{ fontWeight: 600 }}>ID: #{notice.id}</Typography>
-                                                    </Box>
+
+                                                    {/* Update Row - Only shows if data exists */}
+                                                    {(notice.updatedAt || notice.updatedBy) && (
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'info.main', opacity: 0.8 }}>
+                                                            <HistoryIcon sx={{ fontSize: 14 }} />
+                                                            <Typography variant="caption" sx={{ fontWeight: 700, fontStyle: 'italic' }}>
+                                                                Last edited
+                                                                {notice.updatedAt && ` on ${formatDate(notice.updatedAt)}`}
+                                                                {notice.updatedBy?.fullName && ` by ${notice.updatedBy.fullName}`}
+                                                            </Typography>
+                                                        </Box>
+                                                    )}
                                                 </Box>
                                             </Box>
                                         }
@@ -282,7 +313,7 @@ export default function NoticePage() {
                 )}
             </Paper>
 
-            {/* Modal for Add/Edit */}
+            {/* Save/Edit Dialog */}
             <Dialog
                 open={openDialog}
                 onClose={() => !loading && setOpenDialog(false)}
@@ -334,7 +365,7 @@ export default function NoticePage() {
                 </DialogActions>
             </Dialog>
 
-            {/* Confirm Delete Dialog */}
+            {/* Delete Confirmation Dialog */}
             <Dialog open={openDeleteDialog} onClose={() => !loading && setOpenDeleteDialog(false)}>
                 <DialogTitle sx={{ fontWeight: 700 }}>Confirm Deletion</DialogTitle>
                 <DialogContent>
@@ -353,6 +384,7 @@ export default function NoticePage() {
                 </DialogActions>
             </Dialog>
 
+            {/* Global Snackbar */}
             <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar({ ...snackbar, open: false })}>
                 <Alert severity={snackbar.severity} variant="filled">{snackbar.message}</Alert>
             </Snackbar>

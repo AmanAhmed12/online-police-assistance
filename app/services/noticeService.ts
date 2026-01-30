@@ -1,12 +1,23 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
 
+export interface UserInfo {
+    id: number;
+    fullName: string;
+}
+
 export interface Notice {
     id: number;
     title: string;
     content: string;
-    date: string;
+    createdAt: string;
+    updatedAt?: string;
     category: 'General' | 'Urgent' | 'Event';
+    createdBy?: UserInfo;
+    updatedBy?: UserInfo;
 }
+
+// Helper type for creating/editing notices
+export type NoticeInput = Omit<Notice, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>;
 
 async function apiRequest<T>(
     endpoint: string,
@@ -42,10 +53,10 @@ async function apiRequest<T>(
 export const getNotices = async (token?: string) =>
     apiRequest<Notice[]>("/api/notices", "GET", token);
 
-export const createNotice = async (data: Omit<Notice, 'id' | 'date'>, token?: string) =>
+export const createNotice = async (data: NoticeInput, token?: string) =>
     apiRequest<Notice>("/api/notices", "POST", token, data);
 
-export const updateNotice = async (id: number, data: Partial<Notice>, token?: string) =>
+export const updateNotice = async (id: number, data: Partial<NoticeInput>, token?: string) =>
     apiRequest<Notice>(`/api/notices/${id}`, "PUT", token, data);
 
 export const deleteNotice = async (id: number, token?: string) =>
