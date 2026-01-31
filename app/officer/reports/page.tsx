@@ -9,7 +9,7 @@ import {
     DialogActions, TextField, Table, TableBody,
     TableCell, TableContainer, TableHead, TableRow,
     Tooltip, Avatar, Fade, CircularProgress,
-    InputAdornment, TablePagination
+    InputAdornment, TablePagination, Snackbar, Alert
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import {
@@ -28,6 +28,7 @@ import {
     getAllReportRequests,
     updateReportStatus,
     finalizeReportRequest,
+    removePdfFromReport,
     ReportRequest
 } from '@/app/services/reportService';
 
@@ -41,12 +42,32 @@ export default function OfficerReportsManagement() {
     // Dialog state
     const [openViewDialog, setOpenViewDialog] = useState(false);
     const [openUploadDialog, setOpenUploadDialog] = useState(false);
+    const [openDeleteConfirmDialog, setOpenDeleteConfirmDialog] = useState(false);
     const [selectedReport, setSelectedReport] = useState<ReportRequest | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-    // Pagination state
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
+
+    // Snackbar state
+    const [snackbar, setSnackbar] = useState<{
+        open: boolean;
+        message: string;
+        severity: 'success' | 'error' | 'info' | 'warning';
+    }>({
+        open: false,
+        message: '',
+        severity: 'success'
+    });
+
+    const handleCloseSnackbar = (event?: React.SyntheticEvent | Event, reason?: string) => {
+        if (reason === 'clickaway') return;
+        setSnackbar({ ...snackbar, open: false });
+    };
+
+    const showMessage = (message: string, severity: 'success' | 'error' | 'info' | 'warning' = 'success') => {
+        setSnackbar({ open: true, message, severity });
+    };
 
     useEffect(() => {
         const fetchReports = async () => {
@@ -72,9 +93,10 @@ export default function OfficerReportsManagement() {
             // Calling the real backend with the Redux token
             const updated = await updateReportStatus(id, "In Progress", token);
             setReports(prev => prev.map(r => r.id === id ? updated : r));
+            showMessage("Application accepted successfully!");
         } catch (error) {
             console.error("Failed to accept report:", error);
-            alert("Failed to update report status.");
+            showMessage("Failed to update report status.", "error");
         } finally {
             setActionLoading(null);
         }
@@ -94,7 +116,7 @@ export default function OfficerReportsManagement() {
 
     const handleFinalize = async () => {
         if (!selectedReport || !selectedFile || !token) {
-            alert("Please select a signed PDF document before finalizing.");
+            showMessage("Please select a signed PDF document before finalizing.", "warning");
             return;
         }
         setLoading(true);
@@ -107,12 +129,30 @@ export default function OfficerReportsManagement() {
             ));
 
             setOpenUploadDialog(false);
-            alert("Report finalized successfully! The certificate is now available to the citizen.");
+            showMessage("Report finalized successfully! The certificate is now available to the citizen.");
         } catch (error) {
             console.error("Upload failed:", error);
-            alert("Failed to upload certificate. Please try again.");
+            showMessage("Failed to upload certificate. Please try again.", "error");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleRemovePdf = async (reportId: string) => {
+        if (!token) return;
+
+        setActionLoading(reportId);
+        try {
+            const updatedReport = await removePdfFromReport(reportId, token);
+            setReports(prev => prev.map(r => r.id === reportId ? updatedReport : r));
+            setOpenViewDialog(false);
+            setOpenDeleteConfirmDialog(false);
+            showMessage("PDF removed successfully. You can now upload a new certificate.");
+        } catch (error) {
+            console.error("Failed to remove PDF:", error);
+            showMessage("Failed to remove PDF. Please try again.", "error");
+        } finally {
+            setActionLoading(null);
         }
     };
 
@@ -415,16 +455,29 @@ export default function OfficerReportsManagement() {
                         </Button>
                     )}
                     {selectedReport && selectedReport.status?.toUpperCase() === 'PROCESSED' && selectedReport.pdfUrl && (
-                        <Button
-                            fullWidth
-                            variant="outlined"
-                            color="success"
-                            onClick={() => window.open(selectedReport.pdfUrl, '_blank')}
-                            startIcon={<PdfIcon />}
-                            sx={{ borderRadius: '12px', py: 1.5, fontWeight: 700 }}
-                        >
-                            View Uploaded PDF
-                        </Button>
+                        <Stack spacing={2} width="100%">
+                            <Button
+                                fullWidth
+                                variant="outlined"
+                                color="success"
+                                onClick={() => window.open(selectedReport.pdfUrl, '_blank')}
+                                startIcon={<PdfIcon />}
+                                sx={{ borderRadius: '12px', py: 1.5, fontWeight: 700 }}
+                            >
+                                View Uploaded PDF
+                            </Button>
+                            <Button
+                                fullWidth
+                                variant="outlined"
+                                color="error"
+                                onClick={() => setOpenDeleteConfirmDialog(true)}
+                                disabled={!!actionLoading}
+                                startIcon={<CloseIcon />}
+                                sx={{ borderRadius: '12px', py: 1.5, fontWeight: 700 }}
+                            >
+                                Remove PDF & Re-upload
+                            </Button>
+                        </Stack>
                     )}
                 </DialogActions>
             </Dialog>
@@ -505,6 +558,80 @@ export default function OfficerReportsManagement() {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog
+                open={openDeleteConfirmDialog}
+                onClose={() => !actionLoading && setOpenDeleteConfirmDialog(false)}
+                maxWidth="xs"
+                fullWidth
+                PaperProps={{ sx: { borderRadius: '24px', bgcolor: '#1a1f2e' } }}
+            >
+                <DialogTitle component="div" sx={{ textAlign: 'center', pt: 4 }}>
+                    <Avatar sx={{
+                        width: 64, height: 64,
+                        bgcolor: 'rgba(239, 68, 68, 0.1)',
+                        color: '#ef4444',
+                        mx: 'auto', mb: 2
+                    }}>
+                        <CloseIcon sx={{ fontSize: 32 }} />
+                    </Avatar>
+                    <Typography variant="h6" fontWeight="800">Remove PDF Certificate?</Typography>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
+                        This action will delete the uploaded certificate and revert the report status to "In Progress".
+                    </Typography>
+                </DialogTitle>
+                <DialogActions sx={{ p: 3, gap: 1, justifyContent: 'center' }}>
+                    <Button
+                        onClick={() => setOpenDeleteConfirmDialog(false)}
+                        disabled={!!actionLoading}
+                        sx={{
+                            borderRadius: '12px',
+                            px: 3,
+                            fontWeight: 600,
+                            color: 'text.secondary',
+                            textTransform: 'none'
+                        }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        variant="contained"
+                        color="error"
+                        onClick={() => selectedReport && handleRemovePdf(selectedReport.id)}
+                        disabled={!!actionLoading}
+                        sx={{
+                            borderRadius: '12px',
+                            px: 4,
+                            fontWeight: 800,
+                            textTransform: 'none'
+                        }}
+                    >
+                        {actionLoading ? <CircularProgress size={24} color="inherit" /> : "Remove PDF"}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={6000}
+                onClose={handleCloseSnackbar}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            >
+                <Alert
+                    onClose={handleCloseSnackbar}
+                    severity={snackbar.severity}
+                    variant="filled"
+                    sx={{
+                        width: '100%',
+                        borderRadius: '12px',
+                        fontWeight: 600,
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.2)'
+                    }}
+                >
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
         </Box>
     );
 }

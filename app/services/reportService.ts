@@ -77,3 +77,11 @@ export const finalizeReportRequest = async (reportId: string, file: File, token?
     if (!response.ok) throw new Error(`Upload failed with status ${response.status}`);
     return response.json();
 };
+
+/**
+ * Remove PDF from a processed report
+ * This reverts the report status to "In Progress" and removes the PDF URL
+ */
+export const removePdfFromReport = async (reportId: string, token?: string): Promise<ReportRequest> => {
+    return apiRequest<ReportRequest>(`/api/reports/officer/${reportId}/pdf`, "DELETE", token);
+};

@@ -9,9 +9,9 @@ import {
     DialogActions, TextField, MenuItem, Table, TableBody,
     TableCell, TableContainer, TableHead, TableRow,
     Tooltip, InputAdornment, Avatar, Fade, Zoom, CircularProgress,
-    TablePagination
+    TablePagination, Snackbar, Alert
 } from '@mui/material';
-import Grid from '@mui/material/Grid'; // Using MUI Grid (v2 in MUI v7)
+import Grid from '@mui/material/Grid';
 import {
     Add as AddIcon,
     Edit as EditIcon,
@@ -42,6 +42,26 @@ export default function ReportDashboard() {
     // Pagination state
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
+
+    // Snackbar state
+    const [snackbar, setSnackbar] = useState<{
+        open: boolean;
+        message: string;
+        severity: 'success' | 'error' | 'info' | 'warning';
+    }>({
+        open: false,
+        message: '',
+        severity: 'success'
+    });
+
+    const handleCloseSnackbar = (event?: React.SyntheticEvent | Event, reason?: string) => {
+        if (reason === 'clickaway') return;
+        setSnackbar({ ...snackbar, open: false });
+    };
+
+    const showMessage = (message: string, severity: 'success' | 'error' | 'info' | 'warning' = 'success') => {
+        setSnackbar({ open: true, message, severity });
+    };
 
     useEffect(() => {
         const fetchReports = async () => {
@@ -105,15 +125,17 @@ export default function ReportDashboard() {
             if (selectedId) {
                 // Update logic (Backend DTO specific implementation pending)
                 setReports(reports.map(r => r.id === selectedId ? { ...r, ...formData } : r));
+                showMessage("Application updated successfully!");
             } else {
                 // Professional application submission with Redux token
                 const newReport = await createReportRequest(formData, token);
                 setReports([newReport, ...reports]);
+                showMessage("Official application submitted successfully!");
             }
             setOpenForm(false);
         } catch (error) {
             console.error("Failed to save report:", error);
-            alert("Application failed. Please check your connection.");
+            showMessage("Application failed. Please check your connection.", "error");
         } finally {
             setLoading(false);
         }
@@ -121,7 +143,7 @@ export default function ReportDashboard() {
 
     const handleDownload = (pdfUrl?: string) => {
         if (!pdfUrl) {
-            alert("The official document is still being digitally signed. Please check back in a few minutes.");
+            showMessage("The official document is still being digitally signed. Please check back in a few minutes.", "info");
             return;
         }
         window.open(pdfUrl, '_blank');
@@ -133,9 +155,10 @@ export default function ReportDashboard() {
             // Calling real backend to delete/cancel the request with Redux token
             await deleteReportRequest(id, token);
             setReports(reports.filter(r => r.id !== id));
+            showMessage("Application cancelled successfully!");
         } catch (error) {
             console.error("Failed to delete report:", error);
-            alert("Failed to cancel request.");
+            showMessage("Failed to cancel request.", "error");
         }
     };
 
@@ -156,7 +179,7 @@ export default function ReportDashboard() {
         r.purpose?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         r.nic?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         r.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.id.toLowerCase().includes(searchQuery.toLowerCase())
+        r.id.toString().toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const handleChangePage = (event: unknown, newPage: number) => {
@@ -515,6 +538,27 @@ export default function ReportDashboard() {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={6000}
+                onClose={handleCloseSnackbar}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            >
+                <Alert
+                    onClose={handleCloseSnackbar}
+                    severity={snackbar.severity}
+                    variant="filled"
+                    sx={{
+                        width: '100%',
+                        borderRadius: '12px',
+                        fontWeight: 600,
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.2)'
+                    }}
+                >
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
         </Box>
     );
 }
