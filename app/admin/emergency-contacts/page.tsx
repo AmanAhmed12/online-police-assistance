@@ -27,7 +27,8 @@ import {
     Alert,
     Chip,
     InputAdornment,
-    CircularProgress
+    CircularProgress,
+    TablePagination
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -72,6 +73,10 @@ export default function EmergencyContactsPage() {
         description: '',
         priority: 1
     });
+
+    // Pagination state
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
 
     // Loading & Snackbar States
     const [loading, setLoading] = useState(false);
@@ -120,7 +125,19 @@ export default function EmergencyContactsPage() {
             contact.type.toLowerCase().includes(lowerTerm)
         );
         setFilteredContacts(filtered);
+        setPage(0); // Reset to first page on search
     }, [searchTerm, contacts]);
+
+    const handleChangePage = (event: unknown, newPage: number) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
+    };
+
+    const paginatedContacts = filteredContacts.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
     // 3. UI Helpers
     const getTypeIcon = (type: string) => {
@@ -191,7 +208,7 @@ export default function EmergencyContactsPage() {
     };
 
     return (
-        <Box sx={{ p: { xs: 2, md: 4 } }}>
+        <Box sx={{ p: { xs: 2, md: 4 }, bgcolor: 'background.default', minHeight: '100vh' }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={4} flexWrap="wrap" gap={2}>
                 <Box>
                     <Typography variant="h4" fontWeight="bold" color="primary" gutterBottom>
@@ -212,15 +229,15 @@ export default function EmergencyContactsPage() {
             </Box>
 
             {/* Search Bar */}
-            <Paper sx={{ p: 2, mb: 3, borderRadius: 2, display: 'flex', alignItems: 'center' }} elevation={0} variant="outlined">
+            <Paper sx={{ p: 2, mb: 3, borderRadius: 2, display: 'flex', alignItems: 'center', bgcolor: 'background.paper', border: '1px solid rgba(255,255,255,0.05)' }} elevation={0}>
                 <InputAdornment position="start" sx={{ mr: 1 }}>
-                    <SearchIcon color="action" />
+                    <SearchIcon sx={{ color: 'text.secondary' }} />
                 </InputAdornment>
                 <TextField
                     variant="standard"
                     placeholder="Search contacts by name, number or type..."
                     fullWidth
-                    InputProps={{ disableUnderline: true }}
+                    InputProps={{ disableUnderline: true, sx: { color: 'text.primary' } }}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -253,22 +270,22 @@ export default function EmergencyContactsPage() {
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                filteredContacts.map((contact) => (
+                                paginatedContacts.map((contact) => (
                                     <TableRow key={contact.id} hover>
-                                        <TableCell>
+                                        <TableCell sx={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                                             <Box display="flex" alignItems="center" gap={1}>
                                                 {getTypeIcon(contact.type)}
-                                                <Chip label={contact.type} size="small" variant="outlined" color="primary" />
+                                                <Chip label={contact.type} size="small" variant="outlined" sx={{ color: 'primary.main', borderColor: 'rgba(40,102,242,0.3)' }} />
                                             </Box>
                                         </TableCell>
-                                        <TableCell><Typography fontWeight="500">{contact.name}</Typography></TableCell>
-                                        <TableCell><Typography fontWeight="bold" color="primary">{contact.number}</Typography></TableCell>
-                                        <TableCell>{contact.description || "-"}</TableCell>
-                                        <TableCell align="right">
+                                        <TableCell sx={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}><Typography fontWeight="500" color="text.primary">{contact.name}</Typography></TableCell>
+                                        <TableCell sx={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}><Typography fontWeight="bold" color="primary.main">{contact.number}</Typography></TableCell>
+                                        <TableCell sx={{ borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'text.secondary' }}>{contact.description || "-"}</TableCell>
+                                        <TableCell align="right" sx={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                                             <IconButton color="primary" onClick={() => handleOpenDialog(contact)} size="small">
                                                 <EditIcon fontSize="small" />
                                             </IconButton>
-                                            <IconButton color="error" onClick={() => { setContactToDelete(contact.id); setOpenDeleteDialog(true); }} size="small">
+                                            <IconButton sx={{ color: 'error.main' }} onClick={() => { setContactToDelete(contact.id); setOpenDeleteDialog(true); }} size="small">
                                                 <DeleteIcon fontSize="small" />
                                             </IconButton>
                                         </TableCell>
@@ -278,6 +295,15 @@ export default function EmergencyContactsPage() {
                         </TableBody>
                     </Table>
                 </TableContainer>
+                <TablePagination
+                    rowsPerPageOptions={[10, 25, 50]}
+                    component="div"
+                    count={filteredContacts.length}
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={handleChangePage}
+                    onRowsPerPageChange={handleChangeRowsPerPage}
+                />
             </Paper>
 
             {/* Dialogs and Snackbars remain mostly the same but use the updated handlers */}

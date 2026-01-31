@@ -42,7 +42,10 @@ async function apiRequest<T>(
         throw new Error(errorData.message || `Error ${response.status}`);
     }
 
-    return response.status === 204 ? ({} as T) : response.json();
+    if (response.status === 204) return {} as T;
+
+    const text = await response.text();
+    return text ? JSON.parse(text) : ({} as T);
 }
 
 // --- Exported Services ---

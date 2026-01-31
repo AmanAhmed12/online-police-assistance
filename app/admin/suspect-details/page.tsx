@@ -5,7 +5,8 @@ import {
     Box, Typography, Paper, Table, TableBody, TableCell, TableContainer,
     TableHead, TableRow, IconButton, Button, Dialog, DialogTitle,
     DialogContent, DialogActions, TextField, Checkbox, FormControlLabel,
-    Chip, Avatar, Snackbar, Alert, Grid, MenuItem, Stack, Divider
+    Chip, Avatar, Snackbar, Alert, Grid, MenuItem, Stack, Divider,
+    TablePagination
 } from "@mui/material";
 
 // Icons
@@ -40,6 +41,20 @@ const IDENTIFYING_SIGNS = ["Scar", "Tattoo", "Beard", "Moustache", "Limping Walk
 export default function SuspectManagementPage() {
     const [suspects, setSuspects] = useState<Suspect[]>([]);
     const token = useSelector((state: RootState) => state.auth.user?.token);
+
+    // Pagination state
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
+    const handleChangePage = (event: unknown, newPage: number) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
+    };
+
+    const paginatedSuspects = suspects.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
     // --- 1. INITIAL LOAD ---
     const fetchSuspects = useCallback(async () => {
@@ -181,7 +196,7 @@ export default function SuspectManagementPage() {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {suspects.map((s) => (
+                            {paginatedSuspects.map((s) => (
                                 <TableRow key={s.id} hover>
                                     <TableCell><Avatar src={s.image} /></TableCell>
                                     <TableCell><Typography fontWeight="600">{s.name}</Typography></TableCell>
@@ -200,6 +215,15 @@ export default function SuspectManagementPage() {
                         </TableBody>
                     </Table>
                 </TableContainer>
+                <TablePagination
+                    rowsPerPageOptions={[10, 25, 50]}
+                    component="div"
+                    count={suspects.length}
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={handleChangePage}
+                    onRowsPerPageChange={handleChangeRowsPerPage}
+                />
             </Paper>
 
 

@@ -333,7 +333,8 @@ import {
     SelectChangeEvent,
     InputAdornment,
     Snackbar,
-    Alert
+    Alert,
+    TablePagination
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -362,6 +363,10 @@ export default function UsersPage() {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [userToDelete, setUserToDelete] = useState<number | null>(null);
     const token = useSelector((state: RootState) => state.auth.user?.token);
+
+    // Pagination state
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
 
     const [formData, setFormData] = useState({
         fullName: '',
@@ -402,6 +407,17 @@ export default function UsersPage() {
     useEffect(() => {
         fetchUsers();
     }, []);
+
+    const handleChangePage = (event: unknown, newPage: number) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
+    };
+
+    const paginatedUsers = users.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
     // Normalize Role and Status
     const normalizeRole = (role: string) => {
@@ -562,12 +578,12 @@ export default function UsersPage() {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {users.length === 0 ? (
+                            {paginatedUsers.length === 0 ? (
                                 <TableRow key="no-users">
                                     <TableCell colSpan={7} align="center">No users found.</TableCell>
                                 </TableRow>
                             ) : (
-                                users.map((user, index) => (
+                                paginatedUsers.map((user, index) => (
                                     <TableRow key={`${user.id}-${index}`} hover>
                                         <TableCell>{user.fullName}</TableCell>
                                         <TableCell>{user.nic}</TableCell>
@@ -604,6 +620,15 @@ export default function UsersPage() {
                         </TableBody>
                     </Table>
                 </TableContainer>
+                <TablePagination
+                    rowsPerPageOptions={[10, 25, 50]}
+                    component="div"
+                    count={users.length}
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={handleChangePage}
+                    onRowsPerPageChange={handleChangeRowsPerPage}
+                />
             </Paper>
 
             {/* Add/Edit User Dialog */}
