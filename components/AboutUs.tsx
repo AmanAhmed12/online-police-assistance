@@ -1,10 +1,13 @@
 // AboutUs.jsx
+import { Typography } from "@mui/material";
 import React from "react";
 
 export default function AboutUs() {
   return (
     <section className="container" style={{ marginTop: "32px", marginBottom: "32px" }}>
-      <h2 className="section-title">About Us</h2>
+      <Typography variant="h4" align="center" fontWeight={700} gutterBottom>
+        About Us
+      </Typography>
       <p className="section-sub">
         We are dedicated to providing seamless online police assistance, ensuring safety and support for our community.
       </p>
