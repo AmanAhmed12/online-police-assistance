@@ -15,6 +15,8 @@ export interface Complaint {
     evidenceFiles?: string[];
     createdAt: string;
     updatedAt?: string;
+    updatedById?: number;
+    updatedByName?: string;
 }
 
 const getAuthHeader = (token?: string) => ({
