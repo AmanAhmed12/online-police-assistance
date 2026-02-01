@@ -161,8 +161,6 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import DownloadIcon from '@mui/icons-material/Download';
 import TimerIcon from '@mui/icons-material/Timer';
 
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { useSelector } from 'react-redux';
 import { getUsers } from '@/app/services/authService';
 import { getAllComplaints, Complaint } from '@/app/services/complaintService';
@@ -171,8 +169,6 @@ import { alpha, useTheme } from '@mui/material/styles';
 import { subDays, isAfter, isBefore } from 'date-fns';
 
 export default function AdminDashboardPage() {
-    const [openModal, setOpenModal] = useState(false);
-    const [reportType, setReportType] = useState("");
     const [userData, setUserData] = useState<any[]>([]);
     const [complaintData, setComplaintData] = useState<Complaint[]>([]);
     const [reportRequestData, setReportRequestData] = useState<ReportRequest[]>([]);
@@ -255,157 +251,6 @@ export default function AdminDashboardPage() {
     }, [token]); // Re-run if token changes
 
 
-    const generatePDF = async () => {
-        if (!reportType) {
-            alert("Please select a report type");
-            return;
-        }
-
-        const doc = new jsPDF();
-
-
-        doc.setFillColor(41, 128, 185);
-        doc.rect(0, 0, 210, 40, 'F');
-
-
-        try {
-            const logoImg = new Image();
-            logoImg.src = window.location.origin + '/policelogo.jpeg';
-
-            await new Promise((resolve, reject) => {
-                logoImg.onload = resolve;
-                logoImg.onerror = () => reject(new Error('Image failed to load'));
-                setTimeout(() => reject(new Error('Image load timeout')), 5000);
-            });
-
-            doc.addImage(logoImg, 'JPEG', 15, 8, 24, 28); // Match the extension
-        } catch (error) {
-            console.warn('Error loading logo, using fallback:', error);
-
-            doc.setFillColor(255, 255, 255);
-            doc.circle(27.5, 20, 12, 'F');
-            doc.setFillColor(41, 128, 185);
-            doc.circle(27.5, 20, 10, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(16);
-            doc.setFont('helvetica', 'bold');
-            doc.text('P', 24.5, 23);
-        }
-
-
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(22);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Online Police System', 45, 18);
-
-
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'normal');
-        doc.text(reportType, 45, 27);
-
-
-        const currentDate = new Date().toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-        const currentTime = new Date().toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        doc.setFontSize(9);
-        doc.text(`Generated: ${currentDate} at ${currentTime}`, 45, 33);
-
-
-        doc.setDrawColor(189, 195, 199);
-        doc.setLineWidth(0.5);
-        doc.line(14, 45, 196, 45);
-
-
-        doc.setTextColor(0, 0, 0);
-
-
-
-        let headers: string[] = [];
-        let rows: any[] = [];
-
-        if (reportType === "User Report") {
-            headers = ["ID", "Name", "Role", "Status"];
-            rows = userData.map(u => [u.id, u.fullName, u.role, u.status]);
-        } else if (reportType === "Complaints Report") {
-            headers = ["ID", "Title", "Status", "Assigned To"];
-            rows = complaintData.map(c => [c.id, c.title, c.status, c.assignedOfficerName || "Unassigned"]);
-        } else if (reportType === "Cases Report") {
-            // "Cases" are specialized complaints that are assigned
-            const assignedComplaints = complaintData.filter(c => c.assignedOfficerId);
-            headers = ["ID", "Title", "Status", "Officer"];
-            rows = assignedComplaints.map(c => [c.id, c.title, c.status, c.assignedOfficerName]);
-        } else if (reportType === "Full Stats Report") {
-            headers = ["Metric", "Value"];
-            rows = [
-                ["Total Users", userData.length],
-                ["Total Staff (Officers)", totalOfficers],
-                ["Total Complaints", totalComplaints],
-                ["Solved Complaints", solvedComplaints],
-                ["Active Complaints", activeComplaints],
-                ["Pending Report Requests", pendingFiles],
-                ["Resolution Rate", `${resolutionRate}%`],
-                ["Avg Case Load (Cases/Staff)", `${avgCaseLoad}`],
-            ];
-        }
-
-
-        autoTable(doc, {
-            head: [headers],
-            body: rows,
-            startY: 52,
-            theme: 'grid',
-            styles: {
-                fontSize: 10,
-                cellPadding: 4,
-            },
-            headStyles: {
-                fillColor: [52, 73, 94], // Dark blue-gray header
-                textColor: 255,
-                fontSize: 11,
-                fontStyle: 'bold',
-                halign: 'center',
-            },
-            alternateRowStyles: {
-                fillColor: [245, 247, 250], // Light gray for alternate rows
-            },
-            margin: { left: 14, right: 14 },
-        });
-
-
-
-        // Add footer to all pages
-        const pageCount = doc.internal.pages.length - 1;
-        for (let i = 1; i <= pageCount; i++) {
-            doc.setPage(i);
-            doc.setFontSize(8);
-            doc.setTextColor(128, 128, 128);
-
-            doc.text(
-                `Page ${i} of ${pageCount}`,
-                doc.internal.pageSize.width / 2,
-                doc.internal.pageSize.height - 10,
-                { align: 'center' }
-            );
-
-
-            doc.text(
-                'Online Police System - Confidential',
-                14,
-                doc.internal.pageSize.height - 10
-            );
-        }
-
-
-        doc.save(`${reportType.replace(/\s+/g, '_')}_${new Date().getTime()}.pdf`);
-        setOpenModal(false);
-    };
-
     return (
         <Box sx={{ p: 3 }}>
             {/* Page Header */}
@@ -427,14 +272,6 @@ export default function AdminDashboardPage() {
                         Welcome back, Admin. Here is what's happening today.
                     </Typography>
                 </Box>
-                <Button
-                    variant="contained"
-                    startIcon={<DownloadIcon />}
-                    onClick={() => setOpenModal(true)}
-                    aria-label="Generate Report"
-                >
-                    Generate Report
-                </Button>
             </Box>
 
             {/* Stats Grid */}
@@ -552,31 +389,6 @@ export default function AdminDashboardPage() {
                 </Grid>
             </Grid>
 
-            {/* Report Selection Modal */}
-            <Dialog open={openModal} onClose={() => setOpenModal(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>Select Report to Generate</DialogTitle>
-                <DialogContent>
-                    <FormControl fullWidth sx={{ mt: 2 }}>
-                        <InputLabel>Report Type</InputLabel>
-                        <Select
-                            value={reportType}
-                            onChange={(e) => setReportType(e.target.value)}
-                            label="Report Type"
-                        >
-                            <MenuItem value="User Report">User Report</MenuItem>
-                            <MenuItem value="Complaints Report">Complaints Report</MenuItem>
-                            <MenuItem value="Cases Report">Cases Report</MenuItem>
-                            <MenuItem value="Full Stats Report">Full Stats Report</MenuItem>
-                        </Select>
-                    </FormControl>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setOpenModal(false)}>Cancel</Button>
-                    <Button variant="contained" onClick={generatePDF}>
-                        Generate PDF
-                    </Button>
-                </DialogActions>
-            </Dialog>
         </Box>
     );
 }

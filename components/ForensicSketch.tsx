@@ -147,14 +147,18 @@ const ForensicSketch: React.FC<ForensicSketchProps> = ({ imageUrl, width = '100%
                 }}
             />
 
-            {/* Paper Texture Overlay */}
+            {/* Paper Texture Overlay (CSS-based to avoid CORS/html2canvas errors) */}
             {!isProcessing && !error && (
                 <Box
                     sx={{
                         position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
                         pointerEvents: 'none',
-                        backgroundImage: 'url("https://www.transparenttextures.com/patterns/paper.png")',
-                        opacity: 0.6,
+                        // CSS-based grain instead of external image
+                        background: `
+                            linear-gradient(rgba(253, 251, 247, 0.2), rgba(253, 251, 247, 0.2)),
+                            url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")
+                        `,
+                        opacity: 0.15,
                         mixBlendMode: 'multiply',
                         zIndex: 2
                     }}

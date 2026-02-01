@@ -17,8 +17,6 @@
     "@reduxjs/toolkit": "^2.11.2",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.29.2",
-    "jspdf": "^4.0.0",
-    "jspdf-autotable": "^5.0.7",
     "next": "15.4.5",
     "react": "19.1.0",
     "react-dom": "19.1.0",

@@ -12,7 +12,12 @@ import {
     CircularProgress,
     Divider,
     Container,
-    Button
+    Button,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Grid
 } from '@mui/material';
 import ArticleIcon from '@mui/icons-material/Article';
 import { useSelector } from 'react-redux';
@@ -28,6 +33,7 @@ export default function MyComplaintsPage() {
 
     const [complaints, setComplaints] = useState<Complaint[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -100,7 +106,7 @@ export default function MyComplaintsPage() {
                                             primary={
                                                 <Box display="flex" justifyContent="space-between" alignItems="flex-start" flexWrap="wrap" gap={1}>
                                                     <Box>
-                                                        <Typography variant="h6" fontWeight="bold" color="primary.main">
+                                                        <Typography variant="h6" fontWeight="bold" color="primary.main" sx={{ cursor: 'pointer' }} onClick={() => setSelectedComplaint(item)}>
                                                             {item.title}
                                                         </Typography>
                                                         <Typography variant="caption" color="text.secondary" display="block" mt={0.5}>
@@ -118,10 +124,15 @@ export default function MyComplaintsPage() {
                                             secondaryTypographyProps={{ component: 'div' }}
                                             secondary={
                                                 <Box mt={1}>
-                                                    <Typography variant="body1" color="text.primary" gutterBottom>
-                                                        {item.description.length > 150
-                                                            ? `${item.description.substring(0, 150)}...`
-                                                            : item.description}
+                                                    <Typography variant="body1" color="text.primary" gutterBottom sx={{
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        display: '-webkit-box',
+                                                        WebkitLineClamp: 2,
+                                                        WebkitBoxOrient: 'vertical',
+                                                        cursor: 'pointer'
+                                                    }} onClick={() => setSelectedComplaint(item)}>
+                                                        {item.description}
                                                     </Typography>
 
                                                     <Box display="flex" gap={3} mt={1} flexWrap="wrap">
@@ -157,6 +168,73 @@ export default function MyComplaintsPage() {
                     )}
                 </Paper>
             </Box>
+
+            {/* Complaint Detail Modal */}
+            <Dialog
+                open={Boolean(selectedComplaint)}
+                onClose={() => setSelectedComplaint(null)}
+                maxWidth="md"
+                fullWidth
+            >
+                {selectedComplaint && (
+                    <>
+                        <DialogTitle sx={{ bgcolor: 'primary.main', color: 'white', py: 3 }}>
+                            <Box display="flex" justifyContent="space-between" alignItems="center">
+                                <Typography variant="h5" fontWeight="bold">Complaint Details</Typography>
+                                <Chip
+                                    label={selectedComplaint.status}
+                                    sx={{ bgcolor: 'white', color: 'primary.main', fontWeight: 'bold' }}
+                                />
+                            </Box>
+                        </DialogTitle>
+                        <DialogContent sx={{ mt: 3 }}>
+                            <Box mb={4}>
+                                <Typography variant="overline" color="text.secondary">Title</Typography>
+                                <Typography variant="h6" gutterBottom>{selectedComplaint.title}</Typography>
+                                <Typography variant="caption" color="text.secondary">Reference ID: #{selectedComplaint.id}</Typography>
+                            </Box>
+
+                            <Divider sx={{ mb: 3 }} />
+
+                            <Box mb={4}>
+                                <Typography variant="overline" color="text.secondary">Description</Typography>
+                                <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
+                                    {selectedComplaint.description}
+                                </Typography>
+                            </Box>
+
+                            <Grid container spacing={3} sx={{ bgcolor: 'action.hover', p: 2, borderRadius: 2 }}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
+                                    <Typography variant="caption" color="text.secondary">Category</Typography>
+                                    <Typography variant="subtitle1" fontWeight="bold">{selectedComplaint.category}</Typography>
+                                </Grid>
+                                <Grid size={{ xs: 12, sm: 6 }}>
+                                    <Typography variant="caption" color="text.secondary">Location</Typography>
+                                    <Typography variant="subtitle1" fontWeight="bold">{selectedComplaint.location}</Typography>
+                                </Grid>
+                                <Grid size={{ xs: 12, sm: 6 }}>
+                                    <Typography variant="caption" color="text.secondary">Incident Date</Typography>
+                                    <Typography variant="subtitle1" fontWeight="bold">{new Date(selectedComplaint.incidentDate).toLocaleDateString()}</Typography>
+                                </Grid>
+                                <Grid size={{ xs: 12, sm: 6 }}>
+                                    <Typography variant="caption" color="text.secondary">Submitted On</Typography>
+                                    <Typography variant="subtitle1" fontWeight="bold">{new Date(selectedComplaint.createdAt).toLocaleDateString()}</Typography>
+                                </Grid>
+                            </Grid>
+
+                            {selectedComplaint.assignedOfficerName && (
+                                <Box mt={3} p={2} sx={{ border: '1px solid', borderColor: 'primary.main', borderRadius: 2 }}>
+                                    <Typography variant="caption" color="primary.main" fontWeight="bold">Official Assignment</Typography>
+                                    <Typography variant="body1">Assigned to Officer: <strong>{selectedComplaint.assignedOfficerName}</strong></Typography>
+                                </Box>
+                            )}
+                        </DialogContent>
+                        <DialogActions sx={{ p: 3 }}>
+                            <Button onClick={() => setSelectedComplaint(null)} variant="outlined">Close</Button>
+                        </DialogActions>
+                    </>
+                )}
+            </Dialog>
         </Container>
     );
 }

@@ -19,8 +19,7 @@ import {
     HelpOutline as HelpIcon,
     Gavel as GavelIcon,
     Security as SecurityIcon,
-    FilePresent as FileIcon,
-    Print as PrintIcon
+    FilePresent as FileIcon
 } from '@mui/icons-material';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
@@ -28,6 +27,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store';
 import { matchSuspects, SuspectMatchRequest, SuspectMatchResponse } from '@/app/services/suspectService';
 import ForensicSketch from '@/components/ForensicSketch';
+import { useRouter } from 'next/navigation';
 
 // AI Sketch labels and branding are handled within the ForensicSketch component and Dossier layout.
 
@@ -65,6 +65,7 @@ export default function SuspectDetailsPage() {
     const [loading, setLoading] = useState(false);
     const [results, setResults] = useState<SuspectMatchResponse[]>([]);
     const [searchPerformed, setSearchPerformed] = useState(false);
+    const router = useRouter();
 
     // Form State
     const [gender, setGender] = useState('');
@@ -125,6 +126,17 @@ export default function SuspectDetailsPage() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleFileReport = (suspect: SuspectMatchResponse) => {
+        // Pre-fill parameters in URL for the complaint page
+        const params = new URLSearchParams({
+            title: `Sighting/Incident: Suspect ID #SUS-${suspect.id}`,
+            category: suspect.crime || 'Theft',
+            description: `I am reporting an incident involving the individual identified as Suspect ID #SUS-${suspect.id}. \r\n\r\nLast Seen Location: ${suspect.lastSeenLocation}. \r\n\r\nSystem Observation: ${suspect.description}`,
+            location: suspect.lastSeenLocation
+        });
+        router.push(`/citizen/complaint/new?${params.toString()}`);
     };
 
     return (
@@ -317,13 +329,15 @@ export default function SuspectDetailsPage() {
                             <Grid container spacing={6}>
                                 {results.map((suspect) => (
                                     <Grid size={{ xs: 12 }} key={suspect.id}>
-                                        <Card sx={{
-                                            display: 'flex', flexDirection: { xs: 'column', lg: 'row' },
-                                            borderRadius: 4, overflow: 'hidden', border: '1px solid rgba(40, 102, 242, 0.3)',
-                                            boxShadow: '0 20px 60px rgba(0,0,0,0.6)', position: 'relative',
-                                            bgcolor: '#131722', transition: 'all 0.3s ease',
-                                            '&:hover': { border: '1px solid #2866f2', transform: 'translateY(-5px)' }
-                                        }}>
+                                        <Card
+                                            sx={{
+                                                display: 'flex', flexDirection: { xs: 'column', lg: 'row' },
+                                                borderRadius: 4, overflow: 'hidden', border: '1px solid rgba(40, 102, 242, 0.3)',
+                                                boxShadow: '0 20px 60px rgba(0,0,0,0.6)', position: 'relative',
+                                                bgcolor: '#131722', transition: 'all 0.3s ease',
+                                                '&:hover': { border: '1px solid #2866f2', transform: 'translateY(-5px)' }
+                                            }}
+                                        >
                                             {/* Confidential Watermark */}
                                             <Box sx={{
                                                 position: 'absolute', top: -40, right: 100, fontSize: '15rem',
@@ -333,7 +347,9 @@ export default function SuspectDetailsPage() {
                                             </Box>
 
                                             {/* Dossier Image Section */}
-                                            <Box sx={{ width: { xs: '100%', lg: 400 }, height: { xs: 400, lg: 550 }, position: 'relative' }}>
+                                            <Box
+                                                sx={{ width: { xs: '100%', lg: 400 }, height: { xs: 400, lg: 550 }, position: 'relative' }}
+                                            >
                                                 <ForensicSketch imageUrl={suspect.image} />
 
                                                 <Box sx={{ position: 'absolute', top: 30, left: -5, bgcolor: '#000', color: 'white', px: 3, py: 1, transform: 'rotate(-5deg)', fontWeight: 800, boxShadow: 10, letterSpacing: 2, border: '2px solid white', zIndex: 5 }}>
@@ -390,8 +406,16 @@ export default function SuspectDetailsPage() {
                                                 </Box>
 
                                                 <Box display="flex" gap={2} mt={6}>
-                                                    <Button variant="contained" fullWidth startIcon={<PrintIcon />} sx={{ height: 50, borderRadius: 2, bgcolor: '#2866f2' }}>Export Dossier PDF</Button>
-                                                    <Button variant="outlined" fullWidth startIcon={<FileIcon />} sx={{ height: 50, borderRadius: 2, borderColor: 'rgba(255,255,255,0.1)', color: '#f5f7ff' }}>File Incident Report</Button>
+                                                    <Button
+                                                        variant="contained"
+                                                        fullWidth
+                                                        type="button"
+                                                        startIcon={<FileIcon />}
+                                                        onClick={(e) => { e.stopPropagation(); handleFileReport(suspect); }}
+                                                        sx={{ height: 50, borderRadius: 2, bgcolor: '#2866f2' }}
+                                                    >
+                                                        File Incident Report
+                                                    </Button>
                                                 </Box>
                                             </CardContent>
                                         </Card>

@@ -30,7 +30,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SendIcon from '@mui/icons-material/Send';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createComplaint } from '@/app/services/complaintService';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store';
@@ -62,6 +62,25 @@ export default function FileComplaintPage() {
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 
     const [errors, setErrors] = useState<any>({});
+    const searchParams = useSearchParams();
+
+    // Auto-fill from URL params (for "File Incident Report" from suspect dossier)
+    React.useEffect(() => {
+        const title = searchParams.get('title');
+        const category = searchParams.get('category');
+        const location = searchParams.get('location');
+        const description = searchParams.get('description');
+
+        if (title || category || location || description) {
+            setFormData(prev => ({
+                ...prev,
+                ...(title && { title }),
+                ...(category && { category }),
+                ...(location && { location }),
+                ...(description && { description }),
+            }));
+        }
+    }, [searchParams]);
 
     const handleLanguageChange = (event: React.MouseEvent<HTMLElement>, newLang: Language) => {
         if (newLang) {
