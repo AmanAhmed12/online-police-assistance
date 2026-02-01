@@ -10,31 +10,74 @@ import {
     Typography,
     Chip,
     Box,
-    Avatar
+    Avatar,
+    Skeleton
 } from '@mui/material';
+import { Complaint } from '@/app/services/complaintService';
+import { ReportRequest } from '@/app/services/reportService';
+import { formatDistanceToNow } from 'date-fns';
 
-// Dummy data types
+// Activity interface for combined feed
 interface Activity {
     id: string;
-    user: {
-        name: string;
-        email: string;
-        avatar?: string;
-    };
+    userName: string;
+    userEmail: string;
     action: string;
-    status: 'completed' | 'pending' | 'failed';
-    date: string;
+    status: 'completed' | 'pending' | 'failed' | string;
+    date: Date;
+    type: 'complaint' | 'report';
 }
 
-const rows: Activity[] = [
-    { id: '1', user: { name: 'Rahul Sharma', email: 'rahul.s@example.com' }, action: 'Submitted new complaint', status: 'pending', date: '2 min ago' },
-    { id: '2', user: { name: 'Priya Patel', email: 'priya.p@example.com' }, action: 'Updated profile details', status: 'completed', date: '15 min ago' },
-    { id: '3', user: { name: 'Amit Singh', email: 'amit.singh@example.com' }, action: 'Filed FIR Request', status: 'pending', date: '32 min ago' },
-    { id: '4', user: { name: 'Sneha Gupta', email: 'sneha.g@example.com' }, action: 'Password reset', status: 'completed', date: '1 hour ago' },
-    { id: '5', user: { name: 'Vikram Malhotra', email: 'vikram.m@example.com' }, action: 'Document verification failed', status: 'failed', date: '2 hours ago' },
-];
+interface RecentActivityTableProps {
+    complaints: Complaint[];
+    reports: ReportRequest[];
+    loading?: boolean;
+}
 
-export default function RecentActivityTable() {
+export default function RecentActivityTable({ complaints, reports, loading }: RecentActivityTableProps) {
+    // Combine and sort activities
+    const activities: Activity[] = React.useMemo(() => {
+        const combined: Activity[] = [
+            ...complaints.map(c => ({
+                id: `c-${c.id}`,
+                userName: c.citizenName || 'Unknown User',
+                userEmail: '', // Not always available in DTO
+                action: `Submitted complaint: ${c.title}`,
+                status: c.status || 'pending',
+                date: new Date(c.createdAt),
+                type: 'complaint' as const
+            })),
+            ...reports.map(r => ({
+                id: `r-${r.id}`,
+                userName: r.fullName || 'Unknown User',
+                userEmail: '',
+                action: `Applied for report: ${r.purpose}`,
+                status: r.status?.toLowerCase() === 'processed' ? 'completed' : 'pending',
+                date: new Date(r.createdAt),
+                type: 'report' as const
+            }))
+        ];
+
+        return combined
+            .sort((a, b) => b.date.getTime() - a.date.getTime())
+            .slice(0, 5);
+    }, [complaints, reports]);
+
+    const getStatusColor = (status: string) => {
+        const s = status.toLowerCase().replace(/_/g, ' ');
+        if (s === 'completed' || s === 'solved' || s === 'processed') return { bg: 'rgba(0, 230, 118, 0.1)', color: '#00e676' };
+        if (s === 'pending') return { bg: 'rgba(255, 179, 0, 0.1)', color: '#ffb300' };
+        if (s === 'in progress' || s === 'in investigation' || s === 'under investigation') return { bg: 'rgba(33, 150, 243, 0.1)', color: '#2196f3' };
+        if (s === 'failed' || s === 'rejected') return { bg: 'rgba(255, 23, 68, 0.1)', color: '#ff1744' };
+        return { bg: 'rgba(0,0,0,0.05)', color: 'inherit' };
+    };
+
+    const formatStatus = (status: string) => {
+        return status.replace(/_/g, ' ').toLowerCase()
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+    };
     return (
         <Paper sx={{ width: '100%', overflow: 'hidden', p: 3 }}>
             <Typography variant="h6" fontWeight="bold" gutterBottom>
@@ -51,46 +94,65 @@ export default function RecentActivityTable() {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {rows.map((row) => (
-                            <TableRow
-                                key={row.id}
-                                sx={{ '&:last-child td, &:last-child th': { border: 0 }, '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' } }}
-                            >
-                                <TableCell component="th" scope="row">
-                                    <Box display="flex" alignItems="center" gap={2}>
-                                        <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.dark', fontSize: '0.9rem' }}>
-                                            {row.user.name.charAt(0)}
-                                        </Avatar>
-                                        <Box>
-                                            <Typography variant="subtitle2" fontWeight={600}>
-                                                {row.user.name}
+                        {loading ? (
+                            [...Array(5)].map((_, i) => (
+                                <TableRow key={i}>
+                                    <TableCell><Box display="flex" gap={2}><Skeleton variant="circular" width={32} height={32} /><Skeleton width={120} /></Box></TableCell>
+                                    <TableCell><Skeleton width={200} /></TableCell>
+                                    <TableCell><Skeleton width={80} /></TableCell>
+                                    <TableCell><Skeleton width={60} /></TableCell>
+                                </TableRow>
+                            ))
+                        ) : activities.length > 0 ? (
+                            activities.map((row) => {
+                                const colors = getStatusColor(row.status);
+                                return (
+                                    <TableRow
+                                        key={row.id}
+                                        sx={{ '&:last-child td, &:last-child th': { border: 0 }, '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' } }}
+                                    >
+                                        <TableCell component="th" scope="row">
+                                            <Box display="flex" alignItems="center" gap={2}>
+                                                <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.dark', fontSize: '0.9rem' }}>
+                                                    {row.userName.charAt(0)}
+                                                </Avatar>
+                                                <Box>
+                                                    <Typography variant="subtitle2" fontWeight={600}>
+                                                        {row.userName}
+                                                    </Typography>
+                                                </Box>
+                                            </Box>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography variant="body2" color="text.primary">
+                                                {row.action}
                                             </Typography>
-                                            <Typography variant="caption" color="text.secondary">
-                                                {row.user.email}
-                                            </Typography>
-                                        </Box>
-                                    </Box>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Chip
+                                                label={formatStatus(row.status)}
+                                                size="small"
+                                                sx={{
+                                                    textTransform: 'capitalize',
+                                                    fontWeight: 600,
+                                                    bgcolor: colors.bg,
+                                                    color: colors.color
+                                                }}
+                                            />
+                                        </TableCell>
+                                        <TableCell align="right" sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}>
+                                            {formatDistanceToNow(row.date, { addSuffix: true })}
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                                    <Typography color="text.secondary">No recent activity found.</Typography>
                                 </TableCell>
-                                <TableCell>{row.action}</TableCell>
-                                <TableCell>
-                                    <Chip
-                                        label={row.status}
-                                        size="small"
-                                        sx={{
-                                            textTransform: 'capitalize',
-                                            fontWeight: 600,
-                                            bgcolor: row.status === 'completed' ? 'rgba(0, 230, 118, 0.1)' :
-                                                row.status === 'pending' ? 'rgba(255, 179, 0, 0.1)' :
-                                                    'rgba(255, 23, 68, 0.1)',
-                                            color: row.status === 'completed' ? '#00e676' :
-                                                row.status === 'pending' ? '#ffb300' :
-                                                    '#ff1744'
-                                        }}
-                                    />
-                                </TableCell>
-                                <TableCell align="right" sx={{ color: 'text.secondary' }}>{row.date}</TableCell>
                             </TableRow>
-                        ))}
+                        )}
                     </TableBody>
                 </Table>
             </TableContainer>

@@ -162,58 +162,64 @@ import DownloadIcon from '@mui/icons-material/Download';
 import TimerIcon from '@mui/icons-material/Timer';
 
 import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { useSelector } from 'react-redux';
-import { getUsers } from '@/services/authService';
+import { getUsers } from '@/app/services/authService';
+import { getAllComplaints, Complaint } from '@/app/services/complaintService';
+import { getAllReportRequests, ReportRequest } from '@/app/services/reportService';
+import { alpha, useTheme } from '@mui/material/styles';
+import { subDays, isAfter, isBefore } from 'date-fns';
 
 export default function AdminDashboardPage() {
     const [openModal, setOpenModal] = useState(false);
     const [reportType, setReportType] = useState("");
     const [userData, setUserData] = useState<any[]>([]);
+    const [complaintData, setComplaintData] = useState<Complaint[]>([]);
+    const [reportRequestData, setReportRequestData] = useState<ReportRequest[]>([]);
     const token = useSelector((state: any) => state.auth.user?.token);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const theme = useTheme();
 
-
-
-    const totalUsers = 12345;
-    const totalComplaints = 3314;
-    const solvedComplaints = 2891;
+    /* ---------------- DYNAMIC STATS CALCULATIONS ---------------- */
+    const totalUsers = userData.length;
+    const totalOfficers = userData.filter(u => u.role === 'OFFICER').length;
+    const totalComplaints = complaintData.length;
+    const solvedComplaints = complaintData.filter(c => c.status === 'SOLVED' || c.status === 'Solved').length;
     const activeComplaints = totalComplaints - solvedComplaints;
-    const totalOfficers = 35;
-    const activeCases = 423;
-    const lastWeekComplaints = 380;
-    const thisWeekComplaints = 423;
-    const emergencyResponseTimes = [4, 6, 5, 7, 3]; // minutes
+    const pendingFiles = reportRequestData.filter(r => r.status === 'PENDING' || r.status === 'Pending').length;
 
-
-    const complaints = [
-        { id: 101, title: "Theft Complaint", status: "Pending", assignedTo: "John Doe" },
-        { id: 102, title: "Assault Complaint", status: "Solved", assignedTo: "Jane Smith" },
-        { id: 103, title: "Noise Complaint", status: "Pending", assignedTo: "Bob Johnson" },
-    ];
-
-    const cases = [
-        { id: 201, caseName: "Case A", status: "Open", officer: "John Doe" },
-        { id: 202, caseName: "Case B", status: "Closed", officer: "Jane Smith" },
-        { id: 203, caseName: "Case C", status: "Open", officer: "Bob Johnson" },
-    ];
-
-    /* ---------------- MATHEMATICAL CALCULATIONS ---------------- */
     // 1. Resolution Rate
-    const resolutionRate = ((solvedComplaints / totalComplaints) * 100).toFixed(1);
+    const resolutionRate = totalComplaints > 0 ? ((solvedComplaints / totalComplaints) * 100).toFixed(1) : "0.0";
 
     // 2. Case Load per Officer
-    const avgCaseLoad = (activeCases / totalOfficers).toFixed(1);
+    const avgCaseLoad = totalOfficers > 0 ? (totalComplaints / totalOfficers).toFixed(1) : "0.0";
 
-    // 3. Weekly Growth Rate
-    const complaintGrowthRate = (
-        ((thisWeekComplaints - lastWeekComplaints) / lastWeekComplaints) * 100
-    ).toFixed(1);
+    // 3. Weekly Growth Rate Logic
+    const now = new Date();
+    const sevenDaysAgo = subDays(now, 7);
+    const fourteenDaysAgo = subDays(now, 14);
 
-    // 4. Average Emergency Response Time
-    const avgResponseTime = (
-        emergencyResponseTimes.reduce((a, b) => a + b, 0) / emergencyResponseTimes.length
-    ).toFixed(1);
+    const thisWeekCount = complaintData.filter(c => isAfter(new Date(c.createdAt), sevenDaysAgo)).length;
+    const lastWeekCount = complaintData.filter(c =>
+        isAfter(new Date(c.createdAt), fourteenDaysAgo) &&
+        isBefore(new Date(c.createdAt), sevenDaysAgo)
+    ).length;
+
+    const complaintGrowthRate = lastWeekCount > 0
+        ? (((thisWeekCount - lastWeekCount) / lastWeekCount) * 100).toFixed(1)
+        : (thisWeekCount > 0 ? "100" : "0.0");
+
+    // 4. Average System Response Time (Time between creation and assignment/first update)
+    const processedComplaints = complaintData.filter(c => c.updatedAt && c.createdAt !== c.updatedAt);
+    const totalResponseTime = processedComplaints.reduce((acc, c) => {
+        const start = new Date(c.createdAt).getTime();
+        const end = new Date(c.updatedAt!).getTime();
+        return acc + (end - start);
+    }, 0);
+
+    const avgResponseTimeMs = processedComplaints.length > 0 ? totalResponseTime / processedComplaints.length : 0;
+    const avgResponseTime = (avgResponseTimeMs / (1000 * 60 * 60)).toFixed(1); // Convert to hours for system response
 
 
     /* ---------------- API EFFECT ---------------- */
@@ -227,11 +233,19 @@ export default function AdminDashboardPage() {
 
             try {
                 setLoading(true);
-                const data = await getUsers(token);
-                setUserData(data);
+                const [users, complaints, reports] = await Promise.all([
+                    getUsers(token),
+                    getAllComplaints(token),
+                    getAllReportRequests(token)
+                ]);
+
+                setUserData(users);
+                setComplaintData(complaints);
+                setReportRequestData(reports);
                 setError(null);
             } catch (err: any) {
-                setError(err.message || "Failed to fetch users from server.");
+                console.error("Dashboard data fetch error:", err);
+                setError(err.message || "Failed to fetch dashboard data from server.");
             } finally {
                 setLoading(false);
             }
@@ -247,7 +261,6 @@ export default function AdminDashboardPage() {
             return;
         }
 
-        const autoTable = (await import("jspdf-autotable")).default;
         const doc = new jsPDF();
 
 
@@ -257,20 +270,17 @@ export default function AdminDashboardPage() {
 
         try {
             const logoImg = new Image();
-            logoImg.src = '/policelogo.jpeg';
-
+            logoImg.src = window.location.origin + '/policelogo.jpeg';
 
             await new Promise((resolve, reject) => {
                 logoImg.onload = resolve;
-                logoImg.onerror = reject;
-
-                setTimeout(reject, 3000);
+                logoImg.onerror = () => reject(new Error('Image failed to load'));
+                setTimeout(() => reject(new Error('Image load timeout')), 5000);
             });
 
-
-            doc.addImage(logoImg, 'PNG', 15, 8, 24, 28); // x, y, width, height
+            doc.addImage(logoImg, 'JPEG', 15, 8, 24, 28); // Match the extension
         } catch (error) {
-            console.error('Error loading logo:', error);
+            console.warn('Error loading logo, using fallback:', error);
 
             doc.setFillColor(255, 255, 255);
             doc.circle(27.5, 20, 12, 'F');
@@ -324,22 +334,23 @@ export default function AdminDashboardPage() {
             rows = userData.map(u => [u.id, u.fullName, u.role, u.status]);
         } else if (reportType === "Complaints Report") {
             headers = ["ID", "Title", "Status", "Assigned To"];
-            rows = complaints.map(c => [c.id, c.title, c.status, c.assignedTo]);
+            rows = complaintData.map(c => [c.id, c.title, c.status, c.assignedOfficerName || "Unassigned"]);
         } else if (reportType === "Cases Report") {
-            headers = ["ID", "Case Name", "Status", "Officer"];
-            rows = cases.map(c => [c.id, c.caseName, c.status, c.officer]);
+            // "Cases" are specialized complaints that are assigned
+            const assignedComplaints = complaintData.filter(c => c.assignedOfficerId);
+            headers = ["ID", "Title", "Status", "Officer"];
+            rows = assignedComplaints.map(c => [c.id, c.title, c.status, c.assignedOfficerName]);
         } else if (reportType === "Full Stats Report") {
             headers = ["Metric", "Value"];
             rows = [
                 ["Total Users", userData.length],
+                ["Total Staff (Officers)", totalOfficers],
                 ["Total Complaints", totalComplaints],
                 ["Solved Complaints", solvedComplaints],
                 ["Active Complaints", activeComplaints],
+                ["Pending Report Requests", pendingFiles],
                 ["Resolution Rate", `${resolutionRate}%`],
-                ["Active Cases", activeCases],
-                ["Average Case Load per Officer", avgCaseLoad],
-                ["Complaint Growth Rate", `${complaintGrowthRate}%`],
-                ["Average Emergency Response Time", `${avgResponseTime} min`],
+                ["Avg Case Load (Cases/Staff)", `${avgCaseLoad}`],
             ];
         }
 
@@ -452,10 +463,10 @@ export default function AdminDashboardPage() {
 
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <StatCard
-                        title="Avg Case Load"
-                        value={`${avgCaseLoad}`}
-                        trend="Cases / Officer"
-                        isPositive
+                        title="Pending Reports"
+                        value={`${pendingFiles}`}
+                        trend="Action Needed"
+                        isPositive={pendingFiles === 0}
                         icon={<AssignmentIcon />}
                         color="#651fff"
                     />
@@ -463,9 +474,9 @@ export default function AdminDashboardPage() {
 
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <StatCard
-                        title="Avg Response Time"
-                        value={`${avgResponseTime} min`}
-                        trend="Emergency Calls"
+                        title="Avg System Response"
+                        value={`${avgResponseTime} hrs`}
+                        trend="Processing Time"
                         isPositive
                         icon={<TimerIcon />}
                         color="#2866f2"
@@ -476,7 +487,11 @@ export default function AdminDashboardPage() {
             {/* Main Content Sections */}
             <Grid container spacing={3}>
                 <Grid size={{ xs: 12, lg: 8 }}>
-                    <RecentActivityTable />
+                    <RecentActivityTable
+                        complaints={complaintData}
+                        reports={reportRequestData}
+                        loading={loading}
+                    />
                 </Grid>
 
                 <Grid size={{ xs: 12, lg: 4 }}>
