@@ -1,6 +1,6 @@
 "use client";
-import React from 'react';
-import { Typography, Box, Paper, Button } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { Typography, Box, Paper, Button, List, ListItem, ListItemText, Chip, CircularProgress, Divider } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import AddIcon from '@mui/icons-material/Add';
 import HistoryIcon from '@mui/icons-material/History';
@@ -8,16 +8,53 @@ import ArticleIcon from '@mui/icons-material/Article';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import WarningIcon from '@mui/icons-material/Warning';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-
-// Reusing StatCard from admin for now as it's generic enough, or we should duplicate it if we want strict separation.
-// For now, let's create a local simple StatCard or import the admin one if the path allows. 
-// Importing from admin components is fine for MVP.
-import StatCard from '@/components/admin/StatCard';
+import StatCard from '@/components/admin/StatCard'; // Keeping this reuse
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store';
+import { getMyComplaints, Complaint } from '@/app/services/complaintService';
+import { useRouter } from 'next/navigation';
 
 export default function CitizenDashboardPage() {
     const user = useSelector((state: RootState) => state.auth.user);
+    const token = useSelector((state: RootState) => state.auth.user?.token);
+    const router = useRouter();
+
+    const [complaints, setComplaints] = useState<Complaint[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            if (token) {
+                try {
+                    const data = await getMyComplaints(token);
+                    setComplaints(data);
+                } catch (error) {
+                    console.error("Failed to fetch complaints", error);
+                } finally {
+                    setLoading(false);
+                }
+            }
+        };
+        fetchData();
+    }, [token]);
+
+    // Calculate Stats
+    const totalComplaints = complaints.length;
+    const pendingComplaints = complaints.filter(c => c.status === 'PENDING').length;
+    const resolvedComplaints = complaints.filter(c => c.status === 'RESOLVED' || c.status === 'CLOSED').length;
+
+    // Recent activity (last 3)
+    const recentComplaints = [...complaints].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 3);
+
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'PENDING': return 'warning';
+            case 'IN_INVESTIGATION': return 'info';
+            case 'RESOLVED': return 'success';
+            case 'CLOSED': return 'default';
+            default: return 'default';
+        }
+    };
 
     return (
         <Box>
@@ -47,7 +84,7 @@ export default function CitizenDashboardPage() {
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                     <StatCard
                         title="Total Complaints"
-                        value="3"
+                        value={totalComplaints.toString()}
                         trend="Lifetime"
                         isPositive={true}
                         icon={<ArticleIcon />}
@@ -57,7 +94,7 @@ export default function CitizenDashboardPage() {
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                     <StatCard
                         title="Pending"
-                        value="1"
+                        value={pendingComplaints.toString()}
                         trend="In Progress"
                         isPositive={false}
                         icon={<WarningIcon />}
@@ -67,7 +104,7 @@ export default function CitizenDashboardPage() {
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                     <StatCard
                         title="Resolved"
-                        value="2"
+                        value={resolvedComplaints.toString()}
                         trend="Completed"
                         isPositive={true}
                         icon={<CheckCircleIcon />}
@@ -79,18 +116,53 @@ export default function CitizenDashboardPage() {
             {/* Main Content Sections */}
             <Grid container spacing={3}>
                 <Grid size={{ xs: 12, lg: 8 }}>
-                    <Paper sx={{ p: 3 }}>
+                    <Paper sx={{ p: 3, minHeight: 400 }}>
                         <Typography variant="h6" fontWeight="bold" gutterBottom>
                             Recent Complaints
                         </Typography>
                         <Box sx={{ mt: 2 }}>
-                            <Typography variant="body2" color="text.secondary">
-                                No recent activity to show.
-                            </Typography>
-                            {/* Placeholder for a list or table */}
-                            <Button variant="text" sx={{ mt: 2 }} startIcon={<HistoryIcon />}>
-                                View All History
-                            </Button>
+                            {loading ? (
+                                <Box display="flex" justifyContent="center" p={4}><CircularProgress /></Box>
+                            ) : recentComplaints.length === 0 ? (
+                                <Typography variant="body2" color="text.secondary">
+                                    No recent activity to show.
+                                </Typography>
+                            ) : (
+                                <List>
+                                    {recentComplaints.map((item, index) => (
+                                        <React.Fragment key={item.id}>
+                                            <ListItem alignItems="flex-start" sx={{ px: 0 }}>
+                                                <ListItemText
+                                                    primary={
+                                                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                            <Typography variant="subtitle1" fontWeight="bold">{item.title}</Typography>
+                                                            <Chip label={item.status} color={getStatusColor(item.status)} size="small" />
+                                                        </Box>
+                                                    }
+                                                    secondary={
+                                                        <>
+                                                            <Typography variant="body2" color="text.secondary" component="span" display="block">
+                                                                {item.category} • {new Date(item.incidentDate).toLocaleDateString()}
+                                                            </Typography>
+                                                            <Typography variant="caption" color="text.secondary">
+                                                                Submitted on {new Date(item.createdAt).toLocaleDateString()}
+                                                            </Typography>
+                                                        </>
+                                                    }
+                                                />
+                                            </ListItem>
+                                            {index < recentComplaints.length - 1 && <Divider component="li" />}
+                                        </React.Fragment>
+                                    ))}
+                                </List>
+                            )}
+
+                            {/* In a real app, this would link to a full list page */}
+                            {recentComplaints.length > 0 && (
+                                <Button variant="text" sx={{ mt: 2 }} startIcon={<HistoryIcon />} onClick={() => alert("History page coming soon!")}>
+                                    View All History
+                                </Button>
+                            )}
                         </Box>
                     </Paper>
                 </Grid>

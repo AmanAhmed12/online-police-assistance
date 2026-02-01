@@ -7,39 +7,126 @@ export interface Complaint {
     description: string;
     incidentDate: string;
     location: string;
-    status: string; // Pending, In Investigation, Resolved, Closed
+    status: string;
     citizenId?: number;
-    evidenceFiles?: string[]; // URLs or placeholders
+    citizenName?: string;
+    assignedOfficerId?: number;
+    assignedOfficerName?: string;
+    evidenceFiles?: string[];
     createdAt: string;
 }
 
 const getAuthHeader = (token?: string) => ({
     Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json',
+    // 'Content-Type': 'application/json', // Handled dynamically
 });
 
+export const createComplaint = async (data: any, images: File[] = [], token?: string) => {
+    const formData = new FormData();
+    formData.append("data", JSON.stringify(data));
 
+    if (Array.isArray(images)) {
+        images.forEach((image) => {
+            formData.append("images", image);
+        });
+    }
 
-export const createComplaint = async (data: any, token?: string) => {
     const response = await fetch(`${API_BASE_URL}/api/complaints`, {
         method: "POST",
-        headers: getAuthHeader(token),
-        body: JSON.stringify(data),
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+        body: formData,
     });
 
     if (!response.ok) {
-        throw new Error("Failed to submit complaint");
+        throw new Error("Failed to create complaint");
     }
     return await response.json();
 };
 
 export const getMyComplaints = async (token?: string) => {
     const response = await fetch(`${API_BASE_URL}/api/complaints/my`, {
-        headers: getAuthHeader(token),
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
     });
 
     if (!response.ok) {
-        throw new Error("Failed to fetch complaints");
+        throw new Error("Failed to fetch my complaints");
     }
     return await response.json();
+};
+
+export const getMyAssignedComplaints = async (token?: string) => {
+    const response = await fetch(`${API_BASE_URL}/api/complaints/my-assigned`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error("Failed to fetch assigned complaints");
+    }
+    return await response.json();
+};
+
+export const updateComplaintStatus = async (id: number, status: string, token?: string) => {
+    const response = await fetch(`${API_BASE_URL}/api/complaints/${id}/status?status=${status}`, {
+        method: "PATCH",
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error("Failed to update status");
+    }
+    return await response.json();
+};
+
+export const getAllComplaints = async (token?: string) => {
+    const response = await fetch(`${API_BASE_URL}/api/complaints/all`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error("Failed to fetch all complaints");
+    }
+    return await response.json();
+};
+
+export const assignOfficerToComplaint = async (complaintId: number, officerId: number, token?: string) => {
+    // Backend expects PATCH: /api/complaints/{id}/assign?officerId={officerId}
+    const response = await fetch(`${API_BASE_URL}/api/complaints/${complaintId}/assign?officerId=${officerId}`, {
+        method: "PATCH",
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error("Failed to assign officer");
+    }
+    return await response.json();
+};
+
+export const deleteComplaint = async (id: number, token?: string) => {
+    const response = await fetch(`${API_BASE_URL}/api/complaints/${id}`, {
+        method: "DELETE",
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error("Failed to delete complaint");
+    }
 };

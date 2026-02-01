@@ -6,7 +6,8 @@ import {
     Person as ProfileIcon,
     Info as InfoIcon,
     Android as SmartToyIcon,
-    PostAdd as PostAddIcon
+    PostAdd as PostAddIcon,
+    Campaign as CampaignIcon
 } from "@mui/icons-material";
 
 export const citizenNavigation = [
@@ -18,4 +19,5 @@ export const citizenNavigation = [
     { name: "Chat With AI For LAW", href: "/citizen/chat", icon: <SmartToyIcon /> },
     { name: "Suspect Sketching", href: "/citizen/suspect-sketching", icon: <ProfileIcon /> },
     { name: "Guidelines", href: "/citizen/guidelines", icon: <InfoIcon /> },
+    { name: "Notices", href: "/citizen/notices", icon: <CampaignIcon /> },
 ];

@@ -152,20 +152,13 @@ export default function FileComplaintPage() {
 
         setLoading(true);
         try {
-            // Note: In a real backend implementation, we would upload images to Cloudinary here
-            // and get the URLs to send with the complaint data.
-            // For now, we mock the success.
-            const submissionData = {
-                ...formData,
-                evidenceCount: selectedImages.length // Just tracking count for now
-            };
-
-            await createComplaint(submissionData, token);
+            await createComplaint(formData, selectedImages, token);
             setSnackbarOpen(true);
             setTimeout(() => {
                 router.push('/citizen');
             }, 2000);
         } catch (error) {
+            console.error("Complaint submission error:", error);
             alert("Failed to submit complaint. Please try again.");
             setLoading(false);
         }
