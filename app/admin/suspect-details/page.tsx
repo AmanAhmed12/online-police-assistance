@@ -35,7 +35,7 @@ interface Suspect {
     crime: string;
 }
 
-const SAMPLE_CRIMES = ["Theft", "Assault", "Fraud", "Kidnapping", "Drug Possession", "Vandalism"];
+const SAMPLE_CRIMES = ["Theft", "Robbery", "Assault", "Fraud", "Vandalism", "Drugs", "Kidnapping", "Cybercrime", "Other"];
 const IDENTIFYING_SIGNS = ["Scar", "Tattoo", "Beard", "Moustache", "Limping Walk", "Burn Marks", "Missing Finger", "Wears Glasses"];
 
 export default function SuspectManagementPage() {

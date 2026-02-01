@@ -1,50 +1,91 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
 
-// Standardizing the headers with your existing helper logic
-const getAuthHeader = (token?: string) => ({
-    Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json',
-});
+export interface Suspect {
+    id: number;
+    name: string;
+    nic: string;
+    age: number | "";
+    gender: string;
+    lastSeenLocation: string;
+    description: string;
+    signs: string[];
+    image: string;
+    crime: string;
+}
+
+export interface SuspectMatchRequest {
+    gender: string;
+    age: number;
+    lastSeenLocation: string;
+    description: string;
+    signs: string[];
+    crime: string;
+}
+
+export interface SuspectMatchResponse extends Suspect {
+    matchPercentage: number;
+}
 
 export const suspectService = {
-    // GET all suspects
-    getAllSuspects: async (token?: string) => {
+    getAllSuspects: async (token?: string): Promise<Suspect[]> => {
         const response = await fetch(`${API_BASE_URL}/api/suspects`, {
-            headers: getAuthHeader(token),
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
         });
         if (!response.ok) throw new Error("Failed to fetch suspects");
         return await response.json();
     },
 
-    // POST a new suspect
-    createSuspect: async (data: any, token?: string) => {
+    createSuspect: async (data: any, token?: string): Promise<Suspect> => {
         const response = await fetch(`${API_BASE_URL}/api/suspects`, {
             method: "POST",
-            headers: getAuthHeader(token),
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
             body: JSON.stringify(data),
         });
-        if (!response.ok) throw new Error("Failed to register suspect");
+        if (!response.ok) throw new Error("Failed to create suspect");
         return await response.json();
     },
 
-    // PUT (Update) an existing suspect
-    updateSuspect: async (id: number, data: any, token?: string) => {
+    updateSuspect: async (id: number, data: any, token?: string): Promise<Suspect> => {
         const response = await fetch(`${API_BASE_URL}/api/suspects/${id}`, {
             method: "PUT",
-            headers: getAuthHeader(token),
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
             body: JSON.stringify(data),
         });
         if (!response.ok) throw new Error("Failed to update suspect");
         return await response.json();
     },
 
-    // DELETE a suspect
-    deleteSuspect: async (id: number, token?: string) => {
+    deleteSuspect: async (id: number, token?: string): Promise<void> => {
         const response = await fetch(`${API_BASE_URL}/api/suspects/${id}`, {
             method: "DELETE",
-            headers: getAuthHeader(token),
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
         });
         if (!response.ok) throw new Error("Failed to delete suspect");
-        return true;
+    },
+
+    matchSuspects: async (data: SuspectMatchRequest, token?: string): Promise<SuspectMatchResponse[]> => {
+        const response = await fetch(`${API_BASE_URL}/api/suspects/match`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) throw new Error("Failed to match suspects");
+        return await response.json();
     }
 };
+
+// Fallback exports for backward compatibility if needed by other components
+export const matchSuspects = suspectService.matchSuspects;
