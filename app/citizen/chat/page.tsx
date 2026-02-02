@@ -8,10 +8,6 @@ import {
     Paper,
     TextField,
     Button,
-    List,
-    ListItem,
-    ListItemText,
-    ListItemAvatar,
     Avatar,
     FormControl,
     Select,
@@ -23,6 +19,8 @@ import {
 import SendIcon from '@mui/icons-material/Send';
 import SmartToyIcon from '@mui/icons-material/Android';
 import PersonIcon from '@mui/icons-material/Person';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/lib/store';
 
 interface Message {
     id: number;
@@ -32,10 +30,11 @@ interface Message {
 }
 
 export default function AIChatPage() {
+    const token = useSelector((state: RootState) => state.auth.user?.token);
     const [messages, setMessages] = useState<Message[]>([
         {
             id: 1,
-            text: "Hello! I am your AI Legal Assistant. You can ask me about penal codes, legal procedures, or your rights. I can verify information and provide guidance. Please select your preferred language.",
+            text: "### Legal Disclaimer\nI am an AI Legal Assistant designed to provide information based on the Laws of Sri Lanka. \n\n**WARNING**: This is NOT professional legal advice. For serious legal matters, always consult a qualified lawyer. \n\nHow can I assist you with the Sri Lankan Penal Code today?",
             sender: 'ai',
             timestamp: new Date()
         }
@@ -44,6 +43,7 @@ export default function AIChatPage() {
     const [language, setLanguage] = useState('English');
     const [loading, setLoading] = useState(false);
     const messagesEndRef = useRef<null | HTMLDivElement>(null);
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -55,7 +55,6 @@ export default function AIChatPage() {
 
     const handleLanguageChange = (event: SelectChangeEvent) => {
         setLanguage(event.target.value as string);
-        // In a real app, this might trigger a system prompt change to the AI
         setMessages(prev => [...prev, {
             id: Date.now(),
             text: `Language switched to ${event.target.value}. How can I help you?`,
@@ -79,10 +78,11 @@ export default function AIChatPage() {
         setLoading(true);
 
         try {
-            const response = await fetch('/api/chat', {
+            const response = await fetch(`${API_BASE_URL}/api/law/chat`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     message: userMessage.text,
@@ -93,10 +93,9 @@ export default function AIChatPage() {
             const data = await response.json();
 
             if (data.error) {
-                // Handle API errors (e.g., missing key)
                 const errorMessage: Message = {
                     id: Date.now() + 1,
-                    text: `Error: ${data.error}. Please contact support or check configuration.`,
+                    text: `Error: ${data.error}. Please ensure the backend is running.`,
                     sender: 'ai',
                     timestamp: new Date()
                 };
@@ -115,7 +114,7 @@ export default function AIChatPage() {
             console.error("Chat Error:", error);
             const errorMessage: Message = {
                 id: Date.now() + 1,
-                text: "Network error. Please try again.",
+                text: "Network error. Please check your connection to the backend server.",
                 sender: 'ai',
                 timestamp: new Date()
             };
