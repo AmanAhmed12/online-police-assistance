@@ -75,9 +75,7 @@ export default function AdminTopbar({ onSidebarOpen }: AdminTopbarProps) {
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const dispatch = useDispatch();
     const router = useRouter();
-    const token = useSelector(
-        (state: RootState) => state.auth.user?.token
-    );
+    const user = useSelector((state: RootState) => state.auth.user);
 
     const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
@@ -89,8 +87,8 @@ export default function AdminTopbar({ onSidebarOpen }: AdminTopbarProps) {
 
     const handleLogout = async () => {
         try {
-            if (!token) return;
-            await logoutUser(token);
+            if (!user?.token) return;
+            await logoutUser(user.token);
             dispatch(logout());
             router.push('/Login');
         } catch (error) {
@@ -151,11 +149,11 @@ export default function AdminTopbar({ onSidebarOpen }: AdminTopbarProps) {
                             sx={{ p: 0 }}
                         >
                             <Avatar
-                                alt="Admin User"
-                                src="/static/images/avatar/1.jpg"
+                                alt={user?.fullName || "User"}
+                                src={user?.profilePicture || undefined}
                                 sx={{ bgcolor: 'primary.main' }}
                             >
-                                A
+                                {user?.fullName ? user.fullName.charAt(0).toUpperCase() : "U"}
                             </Avatar>
                         </IconButton>
                         <Menu

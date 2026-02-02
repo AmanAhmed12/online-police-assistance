@@ -81,7 +81,7 @@ export default function LoginPage() {
       setDialogOpen(true);
 
     } catch (error: any) {
-      console.error("Login failed or Error:", error);
+      console.warn("Login attempt failed:", error.message);
       setDialogTitle("Login Failed");
       setDialogMessage(error.message || "Invalid credentials");
       setIsSuccess(false);

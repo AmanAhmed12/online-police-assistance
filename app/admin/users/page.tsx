@@ -659,6 +659,7 @@ export default function UsersPage() {
                             name="username"
                             value={formData.username}
                             onChange={handleInputChange}
+                            disabled={!!currentUser} // Disable if editing
                         />
                         <TextField
                             margin="normal"
@@ -667,6 +668,7 @@ export default function UsersPage() {
                             name="email"
                             value={formData.email}
                             onChange={handleInputChange}
+                            disabled={!!currentUser} // Disable if editing
                         />
                         {!currentUser && (
                             <TextField

@@ -1,6 +1,6 @@
 "use client";
 import SettingsComponent from "@/components/SettingsComponent";
 
-export default function AdminSettingsPage() {
+export default function OfficerSettingsPage() {
     return <SettingsComponent />;
 }

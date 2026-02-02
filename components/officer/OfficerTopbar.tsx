@@ -75,9 +75,7 @@ export default function OfficerTopbar({ onSidebarOpen }: OfficerTopbarProps) {
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const dispatch = useDispatch();
     const router = useRouter();
-    const token = useSelector(
-        (state: RootState) => state.auth.user?.token
-    );
+    const user = useSelector((state: RootState) => state.auth.user);
 
     const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
@@ -89,8 +87,8 @@ export default function OfficerTopbar({ onSidebarOpen }: OfficerTopbarProps) {
 
     const handleLogout = async () => {
         try {
-            if (!token) return;
-            await logoutUser(token);
+            if (!user?.token) return;
+            await logoutUser(user.token);
             dispatch(logout());
             router.push('/Login');
         } catch (error) {
@@ -149,11 +147,11 @@ export default function OfficerTopbar({ onSidebarOpen }: OfficerTopbarProps) {
                             sx={{ p: 0 }}
                         >
                             <Avatar
-                                alt="Officer User"
-                                src="/static/images/avatar/2.jpg" // Different avatar or placeholder
+                                alt={user?.fullName || "Officer"}
+                                src={user?.profilePicture || undefined}
                                 sx={{ bgcolor: 'secondary.main', color: 'primary.main' }}
                             >
-                                O
+                                {user?.fullName ? user.fullName.charAt(0).toUpperCase() : "O"}
                             </Avatar>
                         </IconButton>
                         <Menu

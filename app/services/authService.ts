@@ -12,7 +12,8 @@ export const loginUser = async (credentials: any) => {
         });
 
         if (!response.ok) {
-            throw new Error("Login failed");
+            const errorDetails = await response.text();
+            throw new Error(errorDetails || "Login failed");
         }
         return await response.json();
     } catch (error) {
@@ -107,9 +108,21 @@ export const logoutUser = async (token: string) => {
                 "Authorization": `Bearer ${token}`
             },
         });
-        const data = await response.json();
+        let data: any = {};
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+            try {
+                data = await response.json();
+            } catch (e) {
+                console.warn("Failed to parse JSON response during logout");
+            }
+        } else {
+            const text = await response.text();
+            if (text) data = { message: text };
+        }
+
         if (!response.ok) {
-            console.error("Logout failed:", data.message);
+            console.warn("Logout failed:", data);
         }
         // Clear local storage regardless of backend response
         localStorage.removeItem('token');
@@ -120,6 +133,76 @@ export const logoutUser = async (token: string) => {
         // Even if backend logout fails, clear frontend state
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        throw error;
+    }
+};
+
+// Update user profile (supports profile picture upload)
+export const updateProfile = async (formData: FormData, token?: string) => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/users/profile`, {
+            method: "PUT",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                // Don't set Content-Type for FormData - browser will set it with boundary
+            },
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || "Profile update failed");
+        }
+
+        return await response.json();
+    } catch (error) {
+        throw error;
+    }
+};
+
+// Get user profile
+export const getProfile = async (token?: string) => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/users/profile`, {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || "Failed to fetch profile");
+        }
+
+        return await response.json();
+    } catch (error) {
+        throw error;
+    }
+};
+
+// Change password
+export const changePassword = async (passwordData: { currentPassword: string; newPassword: string }, token?: string) => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/users/change-password`, {
+            method: "POST",
+            headers: getAuthHeader(token),
+            body: JSON.stringify(passwordData),
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || "Password change failed");
+        }
+
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+            return await response.json();
+        } else {
+            return await response.text();
+        }
+    } catch (error) {
         throw error;
     }
 };

@@ -74,9 +74,7 @@ export default function CitizenTopbar({ onSidebarOpen }: CitizenTopbarProps) {
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const dispatch = useDispatch();
     const router = useRouter();
-    const token = useSelector(
-        (state: RootState) => state.auth.user?.token
-    );
+    const user = useSelector((state: RootState) => state.auth.user);
 
     const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
@@ -89,8 +87,8 @@ export default function CitizenTopbar({ onSidebarOpen }: CitizenTopbarProps) {
 
     const handleLogout = async () => {
         try {
-            if (!token) return;
-            await logoutUser(token);
+            if (!user?.token) return;
+            await logoutUser(user.token);
             dispatch(logout());
             router.push('/Login');
         } catch (error) {
@@ -151,11 +149,11 @@ export default function CitizenTopbar({ onSidebarOpen }: CitizenTopbarProps) {
                             sx={{ p: 0 }}
                         >
                             <Avatar
-                                alt="Citizen User"
-                                src="/static/images/avatar/citizen.jpg"
+                                alt={user?.fullName || "Citizen"}
+                                src={user?.profilePicture || undefined}
                                 sx={{ bgcolor: 'secondary.main' }}
                             >
-                                C
+                                {user?.fullName ? user.fullName.charAt(0).toUpperCase() : "C"}
                             </Avatar>
                         </IconButton>
                         <Menu
