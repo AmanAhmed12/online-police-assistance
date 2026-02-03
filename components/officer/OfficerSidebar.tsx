@@ -57,7 +57,7 @@ export default function OfficerSidebar({ open, onClose }: OfficerSidebarProps) {
                 >
                     <LocalPoliceIcon />
                 </Box>
-                <Typography variant="h6" fontWeight="700" color="text.primary">
+                <Typography variant="h6" fontWeight="700" sx={{ color: 'white' }}>
                     Officer Portal
                 </Typography>
                 {isMobile && (
@@ -79,8 +79,16 @@ export default function OfficerSidebar({ open, onClose }: OfficerSidebarProps) {
                                 selected={isActive}
                                 onClick={isMobile ? onClose : undefined}
                             >
-                                <ListItemIcon>{item.icon}</ListItemIcon>
-                                <ListItemText primary={item.name} />
+                                <ListItemIcon sx={{ color: isActive ? 'primary.main' : 'white' }}>{item.icon}</ListItemIcon>
+                                <ListItemText
+                                    primary={item.name}
+                                    sx={{
+                                        '& .MuiListItemText-primary': {
+                                            color: isActive ? 'primary.main' : 'white',
+                                            fontWeight: isActive ? 600 : 400
+                                        }
+                                    }}
+                                />
                             </ListItemButton>
                         </Link>
                     );
@@ -96,10 +104,10 @@ export default function OfficerSidebar({ open, onClose }: OfficerSidebarProps) {
                     border: '1px solid rgba(40,102,242,0.1)',
                     textAlign: 'center'
                 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'white' }}>
                         Officer ID: 4192
                     </Typography>
-                    <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.5 }}>
+                    <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.7)', display: 'block', mt: 0.5 }}>
                         On Duty
                     </Typography>
                 </Box>
