@@ -1,10 +1,15 @@
-// components/Footer.tsx
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
-import { Twitter, Facebook, Instagram } from "@mui/icons-material";
-import { Button } from "@mui/material";
+import { Twitter, Facebook, Instagram, Github, Mail, Phone, MapPin } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+
+type FooterLink = {
+  name: string;
+  href?: string;
+  action?: () => void;
+};
 
 export default function Footer() {
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
@@ -16,213 +21,218 @@ export default function Footer() {
   const openPrivacyModal = () => setIsPrivacyModalOpen(true);
   const closePrivacyModal = () => setIsPrivacyModalOpen(false);
 
+  const navigation: Record<string, FooterLink[]> = {
+    product: [
+      { name: "Complaints", href: "#howitworks" },
+      { name: "Suspect Search", href: "#howitworks" },
+      { name: "Police Reports", href: "#howitworks" },
+      { name: "AI Insights", href: "#services" },
+    ],
+    support: [
+      { name: "Emergency Assistance", href: "#services" },
+      { name: "Safety Resources", href: "#services" },
+      { name: "Community Alerts", href: "#services" },
+      { name: "Contact Us", href: "#contact" },
+    ],
+    company: [
+      { name: "About CityGuard", href: "#aboutus" },
+      { name: "Our Mission", href: "#aboutus" },
+      { name: "Our Vision", href: "#aboutus" },
+    ],
+    legal: [
+      { name: "Privacy Policy", action: openPrivacyModal },
+      { name: "Terms of Service", action: openTermsModal },
+    ],
+  };
+
   return (
-    <footer className="footer">
-      <div className="container footer-inner">
-        <div className="footer-col">
-          <div className="footer-title">CityGuard</div>
-          <div className="copy">© 2024 CityGuard. All rights reserved.</div>
+    <footer className="footer" style={{
+      borderTop: "1px solid var(--border-light)",
+      marginTop: "120px",
+      padding: "100px 0 60px",
+      background: "linear-gradient(to bottom, transparent, rgba(99, 102, 241, 0.02))"
+    }}>
+      <div className="container">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: "40px 24px" }}>
+
+          {/* Brand & Social */}
+          <div style={{ gridColumn: "span 12", order: 5 } as any} className="footer-brand-col">
+            <div className="brand" style={{ marginBottom: "28px" }}>
+              <div className="logo-box">C</div>
+              <span style={{ fontWeight: 950, fontSize: "1.5rem", letterSpacing: "-0.04em" }}>CityGuard SL</span>
+            </div>
+            <p style={{
+              color: "var(--fg-secondary)",
+              fontSize: "0.95rem",
+              lineHeight: "1.7",
+              maxWidth: "320px",
+              marginBottom: "32px",
+              fontWeight: 500
+            }}>
+              Advancing public safety through innovative digital solutions.
+              The official bridge between the community and Sri Lanka Police.
+            </p>
+            <div style={{ display: "flex", gap: "12px" }}>
+              {[Twitter, Facebook, Instagram, Github].map((Icon, i) => (
+                <motion.a
+                  key={i}
+                  href="#"
+                  whileHover={{ y: -4, color: "var(--primary)", borderColor: "var(--primary)" }}
+                  style={{
+                    color: "var(--fg-secondary)",
+                    background: "rgba(255,255,255,0.02)",
+                    padding: "10px",
+                    borderRadius: "10px",
+                    border: "1px solid var(--border-light)",
+                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+                  }}
+                >
+                  <Icon size={18} />
+                </motion.a>
+              ))}
+            </div>
+          </div>
+
+          {/* Nav Links Grid */}
+          <div style={{ gridColumn: "span 12" } as any}>
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+              gap: "40px"
+            }}>
+              {Object.entries(navigation).map(([category, links]) => (
+                <div key={category}>
+                  <h4 className="footer-title">{category}</h4>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                    {links.map((link) => (
+                      link.action ? (
+                        <button
+                          key={link.name}
+                          onClick={(e) => { e.preventDefault(); link.action!(); }}
+                          className="footer-link"
+                          style={{ background: "none", border: "none", textAlign: "left", cursor: "pointer", padding: "0" }}
+                        >
+                          {link.name}
+                        </button>
+                      ) : (
+                        itemHrefHelper(link.name, link.href || "#")
+                      )
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <div className="footer-col">
-          <div className="footer-title">Legal</div>
-          {/* Privacy Policy opens modal */}
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              openPrivacyModal();
-            }}
-            className="footer-link"
-          >
-            Privacy Policy
-          </a>
-
-          {/* Terms of Service opens modal */}
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              openTermsModal();
-            }}
-            className="footer-link"
-          >
-            Terms of Service
-          </a>
-        </div>
-
-        <div className="footer-col">
-          <div className="footer-title">Contact</div>
-          <div className="footer-link">support@cityguard.com</div>
-        </div>
-
-        <div className="footer-col">
-          <div className="footer-title">Follow</div>
-          <div className="socials">
-            <Twitter aria-label="twitter" />
-            <Facebook aria-label="facebook" />
-            <Instagram aria-label="instagram" />
+        {/* Bottom copyright bar */}
+        <div style={{
+          marginTop: "100px",
+          paddingTop: "32px",
+          borderTop: "1px solid var(--border-light)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: "24px"
+        }}>
+          <p style={{ color: "var(--fg-secondary)", fontSize: "0.85rem", fontWeight: 500, letterSpacing: "0.01em" }}>
+            © {new Date().getFullYear()} CityGuard Sri Lanka. All Rights Reserved.
+          </p>
+          <div style={{ display: "flex", gap: "24px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "var(--fg-secondary)", fontSize: "0.85rem", fontWeight: 600 }}>
+              <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#10b981", boxShadow: "0 0 12px rgba(16, 185, 129, 0.4)" }}></div>
+              Network Status: Online
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Terms of Service Modal */}
-      {isTermsModalOpen && (
-        <div
-          className="modal-overlay"
-          onClick={closeTermsModal}
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            background: "rgba(0,0,0,0.8)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-            backdropFilter: "blur(4px)",
-          }}
-        >
-          <div
-            className="modal-content"
-            onClick={(e) => e.stopPropagation()}
+      <AnimatePresence>
+        {isTermsModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="modal-overlay"
+            onClick={closeTermsModal}
             style={{
-              backgroundColor: "#1f2433",
-              color: "#f5f7ff",
-              padding: "2rem",
-              borderRadius: "16px",
-              maxWidth: "600px",
-              width: "90%",
-              maxHeight: "80vh",
-              overflowY: "auto",
-              boxShadow: "0 8px 32px rgba(40,102,242,0.25)",
+              position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
+              background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center",
+              justifyContent: "center", zIndex: 9999, backdropFilter: "blur(24px)",
             }}
           >
-            <h2 style={{ color: "#2866f2", marginBottom: "1rem" }}>Terms of Service</h2>
-
-            <p>
-              Welcome to the Sri Lanka Police Online Assistance System. By accessing or using this system, you agree to comply with the following Terms of Service:
-            </p>
-            <p>
-              <strong>1. Usage of the System:</strong> This system is intended for citizens to report incidents, access information, and communicate with authorized police personnel. Unauthorized access or misuse of this system is strictly prohibited.
-            </p>
-            <p>
-              <strong>2. Privacy and Data Security:</strong> All information submitted through this system may be used by the Sri Lanka Police for administrative and investigative purposes. Users are responsible for ensuring that submitted data is accurate and lawful.
-            </p>
-            <p>
-              <strong>3. Prohibited Activities:</strong> Users shall not submit false reports, attempt to hack or interfere with the system, or use it for harassment or illegal purposes.
-            </p>
-            <p>
-              <strong>4. Intellectual Property:</strong> All content, forms, and materials within this system are property of the Sri Lanka Police and protected under applicable intellectual property laws.
-            </p>
-            <p>
-              <strong>5. System Availability:</strong> While we strive to keep the system available 24/7, the Sri Lanka Police is not liable for any interruptions, downtime, or errors.
-            </p>
-            <p>
-              <strong>6. Changes to Terms:</strong> The Sri Lanka Police reserves the right to modify these Terms of Service at any time. Users will be notified of changes where applicable.
-            </p>
-            <p>
-              By using this system, you acknowledge that you have read, understood, and agree to these Terms of Service.
-            </p>
-
-            <Button
-              variant="contained"
-              onClick={closeTermsModal}
-              sx={{
-                mt: 3,
-                backgroundColor: "#2866f2",
-                "&:hover": { backgroundColor: "#1741a6" },
-                color: "#fff",
-                fontWeight: 700,
-                borderRadius: "8px",
-              }}
+            <motion.div
+              initial={{ scale: 0.98, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.98, opacity: 0, y: 10 }}
+              className="glass-card"
+              onClick={(e) => e.stopPropagation()}
+              style={{ maxWidth: "600px", width: "95%", maxHeight: "85vh", overflowY: "auto", border: "1px solid var(--border-light)", padding: "48px" }}
             >
-              OK
-            </Button>
-          </div>
-        </div>
-      )}
+              <h2 style={{ color: "white", marginBottom: "2rem", fontSize: "1.8rem", fontWeight: 900, letterSpacing: "-0.02em" }}>Terms of Service</h2>
+              <div style={{ color: "var(--fg-secondary)", fontSize: "1rem", display: "flex", flexDirection: "column", gap: "1.4rem", lineHeight: "1.8" }}>
+                <p>By accessing the CityGuard platform, you acknowledge and agree to the following terms and conditions designed to ensure community safety and system integrity.</p>
+                <p><strong>1. Responsible Use:</strong> Users are strictly prohibited from filing false reports. Any attempt to deceive law enforcement through this digital portal will result in immediate legal consequences.</p>
+                <p><strong>2. Data Privacy:</strong> We employ end-to-end encryption for all sensitive submissions. Your identity is protected under Sri Lankan cyber-security regulations.</p>
+              </div>
+              <button
+                className="btn-primary"
+                onClick={closeTermsModal}
+                style={{ marginTop: "3rem", width: "100%", height: "54px", borderRadius: "14px", fontWeight: 800 }}
+              >
+                Accept Terms
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
 
-      {/* Privacy Policy Modal */}
-      {isPrivacyModalOpen && (
-        <div
-          className="modal-overlay"
-          onClick={closePrivacyModal}
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            background: "rgba(0,0,0,0.8)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-            backdropFilter: "blur(4px)",
-          }}
-        >
-          <div
-            className="modal-content"
-            onClick={(e) => e.stopPropagation()}
+        {isPrivacyModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="modal-overlay"
+            onClick={closePrivacyModal}
             style={{
-              backgroundColor: "#1f2433",
-              color: "#f5f7ff",
-              padding: "2rem",
-              borderRadius: "16px",
-              maxWidth: "600px",
-              width: "90%",
-              maxHeight: "80vh",
-              overflowY: "auto",
-              boxShadow: "0 8px 32px rgba(40,102,242,0.25)",
+              position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
+              background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center",
+              justifyContent: "center", zIndex: 9999, backdropFilter: "blur(24px)",
             }}
           >
-            <h2 style={{ color: "#2866f2", marginBottom: "1rem" }}>Privacy Policy</h2>
-
-            <p>
-              Your privacy is important to the Sri Lanka Police Online Assistance System. This Privacy Policy explains how we collect, use, and protect your personal information.
-            </p>
-            <p>
-              <strong>1. Information Collection:</strong> We collect information you provide directly, such as incident reports, contact details, and feedback.
-            </p>
-            <p>
-              <strong>2. Use of Information:</strong> Collected data is used solely for law enforcement, administrative purposes, and to improve the services provided through the system.
-            </p>
-            <p>
-              <strong>3. Data Security:</strong> All personal data is stored securely and protected using industry-standard encryption. Access is limited to authorized personnel only.
-            </p>
-            <p>
-              <strong>4. Sharing of Information:</strong> We do not share your personal data with third parties except where required by law or for public safety.
-            </p>
-            <p>
-              <strong>5. User Responsibilities:</strong> Users must provide accurate information and must not attempt to access other users’ data or hack the system.
-            </p>
-            <p>
-              <strong>6. Changes to Privacy Policy:</strong> The Sri Lanka Police may update this Privacy Policy at any time. Users will be notified of major changes when applicable.
-            </p>
-            <p>
-              By using this system, you acknowledge that you have read, understood, and agree to this Privacy Policy.
-            </p>
-
-            <Button
-              variant="contained"
-              onClick={closePrivacyModal}
-              sx={{
-                mt: 3,
-                backgroundColor: "#2866f2",
-                "&:hover": { backgroundColor: "#1741a6" },
-                color: "#fff",
-                fontWeight: 700,
-                borderRadius: "8px",
-              }}
+            <motion.div
+              initial={{ scale: 0.98, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.98, opacity: 0, y: 10 }}
+              className="glass-card"
+              onClick={(e) => e.stopPropagation()}
+              style={{ maxWidth: "600px", width: "95%", maxHeight: "85vh", overflowY: "auto", border: "1px solid var(--border-light)", padding: "48px" }}
             >
-              OK
-            </Button>
-          </div>
-        </div>
-      )}
+              <h2 style={{ color: "white", marginBottom: "2rem", fontSize: "1.8rem", fontWeight: 900, letterSpacing: "-0.02em" }}>Privacy Policy</h2>
+              <div style={{ color: "var(--fg-secondary)", fontSize: "1rem", display: "flex", flexDirection: "column", gap: "1.4rem", lineHeight: "1.8" }}>
+                <p>Your security is our paramount concern. This policy outlines how CityGuard manages and protects the data provided during incident reporting and service requests.</p>
+                <p><strong>1. Data Encryption:</strong> All informationtransmitted through this secure portal is encrypted using industry-standard protocols before reaching Sri Lanka Police servers.</p>
+                <p><strong>2. Access Control:</strong> Only authorized law enforcement personnel can access sensitive complaint data for investigative purposes.</p>
+              </div>
+              <button
+                className="btn-primary"
+                onClick={closePrivacyModal}
+                style={{ marginTop: "3rem", width: "100%", height: "54px", borderRadius: "14px", fontWeight: 800 }}
+              >
+                I Understand
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </footer>
+  );
+}
+
+function itemHrefHelper(name: string, href: string) {
+  return (
+    <Link key={name} href={href} className="footer-link">
+      {name}
+    </Link>
   );
 }

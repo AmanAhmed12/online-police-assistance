@@ -1,73 +1,33 @@
-// components/HowItWorks.tsx
+"use client";
+
+import { motion } from "framer-motion";
+
+const features = [
+  { icon: "🛡️", title: "File Complaints Online", desc: "Make Complaints with detailed information and media attachments." },
+  { icon: "🕵️", title: "Find Matching Suspect", desc: "Find the Matching Suspect by providing details and matching with our database." },
+  { icon: "📄", title: "Request Police Reports", desc: "Easily request official police reports and access case documents securely." },
+  { icon: "🤖", title: "AI Legal Insights", desc: "Get instant insights into potential legal violations by interacting with our AI." },
+  { icon: "📊", title: "Analysis Charts", desc: "Visualize trends and insights with interactive analysis charts for cases." },
+  { icon: "📥", title: "Download Reports", desc: "Export detailed reports in PDF/CSV formats for offline review." },
+];
+
 export default function HowItWorks() {
   return (
-    <>
-      <div className="feature-card">
-        <div className="feature-icon">
-          <div aria-hidden="true">🛡️</div>
-        </div>
-        <div className="feature-text">
-          <h3>File Complaints Online</h3>
-          <p>Make Complaints with detailed information and media attachments.</p>
-        </div>
-      </div>
-      <div className="feature-card">
-        <div className="feature-icon">
-           <div aria-hidden="true">🕵️</div>
-        </div>
-        <div className="feature-text">
-          <h3>Find Matching Suspect</h3>
-          <p>Find the Matching Suspect by providing details and match the details with the suspect list in our system.</p>
-        </div>
-      </div>
-
-      <div className="feature-card">
-        <div className="feature-icon">
-          <div aria-hidden="true">📄</div>
-        </div>
-        <div className="feature-text">
-          <h3>Request Police Reports</h3>
-          <p>
-            Easily request official police reports and access important case
-            documents securely online.
-          </p>
-        </div>
-     </div>
-       
-      <div className="feature-card">
-        <div className="feature-icon">
-          <div aria-hidden="true">🤖</div>
-        </div>
-        <div className="feature-text">
-          <h3>Identify Legal violations by chatting with an AI</h3>
-          <p>
-            Get instant insights into potential legal violations by interacting
-            with our AI-powered chatbot.
-          </p>
-        </div>
-     </div>
-
-       <div className="feature-card">
-  <div className="feature-icon">
-    <div aria-hidden="true">📊</div>
-  </div>
-  <div className="feature-text">
-    <h3>View Analysis Charts</h3>
-    <p>Visualize trends and insights with interactive analysis charts for cases, complaints, and matches.</p>
-  </div>
-</div>
-
-<div className="feature-card">
-  <div className="feature-icon">
-    <div aria-hidden="true">📥</div>
-  </div>
-  <div className="feature-text">
-    <h3>Download Reports</h3>
-    <p>Export detailed reports in PDF/CSV formats for offline review and sharing.</p>
-  </div>
-</div>
-
-
-    </>
+    <div className="grid-standard">
+      {features.map((f, i) => (
+        <motion.div
+          key={i}
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: i * 0.1, duration: 0.8 }}
+          className="glass-card"
+        >
+          <div style={{ fontSize: "2.5rem", marginBottom: "28px" }}>{f.icon}</div>
+          <h3 style={{ marginBottom: "16px", fontSize: "1.4rem" }}>{f.title}</h3>
+          <p style={{ color: "var(--fg-secondary)", fontSize: "1rem", lineHeight: "1.6" }}>{f.desc}</p>
+        </motion.div>
+      ))}
+    </div>
   );
 }
