@@ -29,13 +29,12 @@ export default function Hero() {
                 monitoring, and emergency assistance. Fast, reliable, and secure.
               </p>
               <div className="buttons">
-                <button className="btn-primary" style={{ padding: "16px 36px", height: "auto" }}>
-                  Report Incident
-                  <ArrowRight size={18} style={{ marginLeft: "12px" }} />
-                </button>
-                <button className="btn-secondary" style={{ padding: "16px 36px", height: "auto" }}>
-                  System Status
-                </button>
+                <Link href="/Login">
+                  <button className="btn-primary" style={{ padding: "16px 36px", height: "auto" }}>
+                    Report Incident
+                    <ArrowRight size={18} style={{ marginLeft: "12px" }} />
+                  </button>
+                </Link>
               </div>
             </div>
 
