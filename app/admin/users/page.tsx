@@ -49,7 +49,6 @@
 //     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
 //     const [currentUser, setCurrentUser] = useState<User | null>(null); // For Edit
 //     const [userToDelete, setUserToDelete] = useState<number | null>(null);
-//     const token = useSelector((state: RootState) => state.auth.user?.token);
 
 //     // Form State (could be separate or derived from currentUser)
 //     const [formData, setFormData] = useState({
@@ -334,16 +333,35 @@ import {
     InputAdornment,
     Snackbar,
     Alert,
-    TablePagination
+    TablePagination,
+    Grid,
+    Avatar
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import ChatIcon from '@mui/icons-material/Chat';
+import MessageIcon from '@mui/icons-material/Message';
+import HistoryIcon from '@mui/icons-material/History';
+import SearchIcon from '@mui/icons-material/Search';
+import ClearAllIcon from '@mui/icons-material/ClearAll';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import SendIcon from '@mui/icons-material/Send';
+import CloseIcon from '@mui/icons-material/Close';
 import { deleteUser, getUsers, registerUser, updateUser } from "@/services/authService";
+import { sendNotification, getChatHistory, Notification } from "@/app/services/notificationService";
+import ChatHistoryModal from "@/components/common/ChatHistoryModal";
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store';
+import { format } from 'date-fns';
+import {
+    CircularProgress,
+    Tooltip,
+    IconButton as MuiIconButton,
+    alpha
+} from '@mui/material';
 
 // Define User Interface
 interface User {
@@ -362,7 +380,8 @@ export default function UsersPage() {
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [userToDelete, setUserToDelete] = useState<number | null>(null);
-    const token = useSelector((state: RootState) => state.auth.user?.token);
+    const loggedInUser = useSelector((state: RootState) => state.auth.user);
+    const token = loggedInUser?.token;
 
     // Pagination state
     const [page, setPage] = useState(0);
@@ -382,6 +401,36 @@ export default function UsersPage() {
 
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+    // Messaging State
+    const [openMessageDialog, setOpenMessageDialog] = useState(false);
+    const [targetUser, setTargetUser] = useState<User | null>(null);
+
+    // Filter State
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchQuery(e.target.value);
+        setPage(0);
+    };
+
+    const filteredUsers = users.filter(user => {
+        const query = searchQuery.toLowerCase();
+        return (
+            (user.nic?.toLowerCase() || "").includes(query) ||
+            (user.username?.toLowerCase() || "").includes(query) ||
+            (user.email?.toLowerCase() || "").includes(query) ||
+            (user.fullName?.toLowerCase() || "").includes(query)
+        );
+    });
+    const [messageText, setMessageText] = useState("");
+    const [chatHistory, setChatHistory] = useState<Notification[]>([]);
+    const [fetchingHistory, setFetchingHistory] = useState(false);
+    const [sendingMessage, setSendingMessage] = useState(false);
+
+    // History Modal State
+    const [historyOpen, setHistoryOpen] = useState(false);
+    const [historyTarget, setHistoryTarget] = useState<{ id: number; fullName: string } | null>(null);
 
     // Snackbar State
     const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -417,7 +466,7 @@ export default function UsersPage() {
         setPage(0);
     };
 
-    const paginatedUsers = users.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+    const paginatedUsers = filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
     // Normalize Role and Status
     const normalizeRole = (role: string) => {
@@ -481,6 +530,40 @@ export default function UsersPage() {
             password: '',
             confirmPassword: ''
         });
+    };
+
+    const handleOpenMessageDialog = async (user: User) => {
+        setTargetUser(user);
+        setOpenMessageDialog(true);
+        setMessageText("");
+        setFetchingHistory(true);
+        try {
+            const history = await getChatHistory(user.id, token);
+            setChatHistory(history);
+        } catch (error) {
+            console.error("Failed to fetch chat history:", error);
+        } finally {
+            setFetchingHistory(false);
+        }
+    };
+
+    const handleSendMessage = async () => {
+        if (!targetUser || !messageText.trim()) return;
+
+        setSendingMessage(true);
+        try {
+            await sendNotification(targetUser.id, messageText, token);
+            setMessageText("");
+            // Refresh history
+            const history = await getChatHistory(targetUser.id, token);
+            setChatHistory(history);
+            setSnackbarMessage(`Message sent to ${targetUser.fullName}`);
+            setSnackbarOpen(true);
+        } catch (error: any) {
+            alert(error.message || "Failed to send message");
+        } finally {
+            setSendingMessage(false);
+        }
     };
 
     // Input handlers
@@ -562,6 +645,37 @@ export default function UsersPage() {
                 </Button>
             </Box>
 
+            {/* Search Section */}
+            <Paper sx={{ p: 2, mb: 3, borderRadius: 2 }}>
+                <Grid container spacing={2} alignItems="center">
+                    <Grid size={{ xs: 12 }}>
+                        <TextField
+                            fullWidth
+                            size="medium"
+                            label="Search Users"
+                            variant="outlined"
+                            value={searchQuery}
+                            onChange={handleSearchChange}
+                            placeholder="Type NIC, Username, or Email to search..."
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <SearchIcon color="action" />
+                                    </InputAdornment>
+                                ),
+                                endAdornment: searchQuery && (
+                                    <InputAdornment position="end">
+                                        <IconButton size="small" onClick={() => setSearchQuery('')}>
+                                            <ClearAllIcon />
+                                        </IconButton>
+                                    </InputAdornment>
+                                )
+                            }}
+                        />
+                    </Grid>
+                </Grid>
+            </Paper>
+
             {/* Users Table */}
             <Paper sx={{ mt: 3, overflow: 'hidden' }}>
                 <TableContainer>
@@ -601,6 +715,27 @@ export default function UsersPage() {
                                         <TableCell align="right">
                                             <IconButton
                                                 size="small"
+                                                color="secondary"
+                                                title="View History"
+                                                onClick={() => {
+                                                    setHistoryTarget({ id: user.id, fullName: user.fullName });
+                                                    setHistoryOpen(true);
+                                                }}
+                                                sx={{ mr: 1 }}
+                                            >
+                                                <HistoryIcon />
+                                            </IconButton>
+                                            <IconButton
+                                                size="small"
+                                                color="info"
+                                                title="Send Message"
+                                                onClick={() => handleOpenMessageDialog(user)}
+                                                sx={{ mr: 1 }}
+                                            >
+                                                <ChatIcon />
+                                            </IconButton>
+                                            <IconButton
+                                                size="small"
                                                 color="primary"
                                                 onClick={() => handleOpenDialog(user)}
                                             >
@@ -623,7 +758,7 @@ export default function UsersPage() {
                 <TablePagination
                     rowsPerPageOptions={[10, 25, 50]}
                     component="div"
-                    count={users.length}
+                    count={filteredUsers.length}
                     rowsPerPage={rowsPerPage}
                     page={page}
                     onPageChange={handleChangePage}
@@ -783,6 +918,198 @@ export default function UsersPage() {
                     {snackbarMessage}
                 </Alert>
             </Snackbar>
+            {/* Message User Dialog */}
+            <Dialog
+                open={openMessageDialog}
+                onClose={() => setOpenMessageDialog(false)}
+                fullWidth
+                maxWidth="sm"
+                PaperProps={{
+                    sx: {
+                        borderRadius: 4,
+                        maxHeight: '85vh',
+                        boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
+                        backgroundImage: 'none'
+                    }
+                }}
+            >
+                <DialogTitle component="div" sx={{
+                    p: 2.5,
+                    bgcolor: 'background.paper',
+                    borderBottom: '1px solid',
+                    borderColor: 'divider',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32 }}>
+                            <MessageIcon sx={{ fontSize: 18 }} />
+                        </Avatar>
+                        <Box>
+                            <Typography variant="subtitle1" fontWeight="800">Messages</Typography>
+                            {targetUser && (
+                                <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: -0.5 }}>
+                                    Conversation with {targetUser.fullName}
+                                </Typography>
+                            )}
+                        </Box>
+                    </Box>
+                    <Box>
+                        <Tooltip title="Refresh">
+                            <MuiIconButton size="small" onClick={() => handleOpenMessageDialog(targetUser!)} sx={{ mr: 1 }}>
+                                <RefreshIcon fontSize="small" />
+                            </MuiIconButton>
+                        </Tooltip>
+                        <MuiIconButton size="small" onClick={() => setOpenMessageDialog(false)}>
+                            <CloseIcon fontSize="small" />
+                        </MuiIconButton>
+                    </Box>
+                </DialogTitle>
+
+                <DialogContent sx={{ p: 0, bgcolor: alpha('#f4f7fe', 0.4), position: 'relative' }}>
+                    <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', minHeight: 450 }}>
+                        {fetchingHistory && chatHistory.length === 0 ? (
+                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: 2 }}>
+                                <CircularProgress size={32} thickness={5} />
+                                <Typography variant="body2" color="textSecondary">Fetching conversation...</Typography>
+                            </Box>
+                        ) : chatHistory.length === 0 ? (
+                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, opacity: 0.5 }}>
+                                <MessageIcon sx={{ fontSize: 64, mb: 2, color: 'text.disabled' }} />
+                                <Typography variant="h6" color="textSecondary">Start a chat</Typography>
+                                <Typography variant="body2" color="textSecondary">No messages yet with {targetUser?.fullName}</Typography>
+                            </Box>
+                        ) : (
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                                {[...chatHistory].reverse().map((chat) => {
+                                    const isMe = Number(chat.sender.id) === Number(loggedInUser?.id) ||
+                                        (loggedInUser?.fullName && chat.sender.fullName === loggedInUser.fullName);
+                                    return (
+                                        <Box
+                                            key={chat.id}
+                                            sx={{
+                                                display: 'flex',
+                                                justifyContent: isMe ? 'flex-end' : 'flex-start',
+                                                width: '100%'
+                                            }}
+                                        >
+                                            <Box sx={{
+                                                display: 'flex',
+                                                gap: 1.5,
+                                                maxWidth: '85%',
+                                                flexDirection: isMe ? 'row-reverse' : 'row',
+                                                alignItems: 'flex-start'
+                                            }}>
+                                                <Avatar
+                                                    sx={{
+                                                        width: 36,
+                                                        height: 36,
+                                                        bgcolor: isMe ? 'primary.main' : 'secondary.main',
+                                                        fontSize: '0.9rem',
+                                                        fontWeight: 'bold',
+                                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                                    }}
+                                                >
+                                                    {chat.sender.fullName.charAt(0).toUpperCase()}
+                                                </Avatar>
+                                                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
+                                                    <Paper
+                                                        elevation={0}
+                                                        sx={{
+                                                            p: 2,
+                                                            borderRadius: isMe ? "18px 18px 2px 18px" : "18px 18px 18px 2px",
+                                                            bgcolor: isMe ? 'primary.main' : 'background.paper',
+                                                            color: isMe ? 'white' : 'text.primary',
+                                                            boxShadow: isMe
+                                                                ? '0 4px 12px rgba(40,102,242,0.2)'
+                                                                : '0 2px 8px rgba(0,0,0,0.04)',
+                                                            border: isMe ? 'none' : '1px solid',
+                                                            borderColor: 'divider',
+                                                            position: 'relative'
+                                                        }}
+                                                    >
+                                                        <Typography variant="caption" fontWeight="900" display="block" sx={{ mb: 0.75, fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: 0.5, opacity: isMe ? 0.8 : 0.6 }}>
+                                                            {chat.sender.fullName}{isMe ? " (YOU)" : ""}
+                                                        </Typography>
+                                                        <Typography variant="body2" sx={{ lineHeight: 1.6, wordBreak: 'break-word' }}>
+                                                            {chat.message}
+                                                        </Typography>
+                                                    </Paper>
+                                                    <Typography variant="caption" sx={{ mt: 0.5, fontSize: '0.65rem', color: 'text.secondary', px: 0.5 }}>
+                                                        {format(new Date(chat.createdAt), 'hh:mm a')}
+                                                    </Typography>
+                                                </Box>
+                                            </Box>
+                                        </Box>
+                                    );
+                                })}
+                            </Box>
+                        )}
+                    </Box>
+                </DialogContent>
+
+                <Box sx={{
+                    p: 2.5,
+                    bgcolor: 'background.paper',
+                    borderTop: '1px solid',
+                    borderColor: 'divider'
+                }}>
+                    <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+                        <TextField
+                            fullWidth
+                            multiline
+                            maxRows={4}
+                            placeholder={`Type a message to ${targetUser?.fullName.split(' ')[0]}...`}
+                            value={messageText}
+                            onChange={(e) => setMessageText(e.target.value)}
+                            disabled={sendingMessage}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleSendMessage();
+                                }
+                            }}
+                            InputProps={{
+                                sx: {
+                                    borderRadius: 3,
+                                    bgcolor: alpha('#f4f7fe', 0.5),
+                                    '& fieldset': { border: 'none' },
+                                    '&:hover fieldset': { border: 'none' },
+                                    '&.Mui-focused fieldset': { border: 'none' },
+                                    py: 1.5
+                                }
+                            }}
+                        />
+                        <Tooltip title="Send Message">
+                            <span>
+                                <MuiIconButton
+                                    color="primary"
+                                    onClick={handleSendMessage}
+                                    disabled={!messageText.trim() || sendingMessage}
+                                    sx={{
+                                        bgcolor: 'primary.main',
+                                        color: 'white',
+                                        width: 48,
+                                        height: 48,
+                                        '&:hover': { bgcolor: 'primary.dark' },
+                                        '&.Mui-disabled': { bgcolor: 'action.disabledBackground', color: 'white' },
+                                        boxShadow: '0 4px 12px rgba(40,102,242,0.3)'
+                                    }}
+                                >
+                                    {sendingMessage ? <CircularProgress size={20} color="inherit" /> : <SendIcon fontSize="small" />}
+                                </MuiIconButton>
+                            </span>
+                        </Tooltip>
+                    </Box>
+                </Box>
+            </Dialog>
+
+            <ChatHistoryModal
+                open={historyOpen}
+                onClose={() => setHistoryOpen(false)}
+                initialTarget={historyTarget}
+            />
         </Box>
     );
 }

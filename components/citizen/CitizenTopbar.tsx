@@ -24,6 +24,7 @@ import { useRouter } from 'next/navigation';
 import { logout } from '@/lib/features/auth/authSlice';
 import { logoutUser } from '@/app/services/authService';
 import { RootState } from "@/lib/store";
+import NotificationDropdown from "@/components/common/NotificationDropdown";
 
 const Search = styled('div')(({ theme }) => ({
     position: 'relative',
@@ -134,11 +135,7 @@ export default function CitizenTopbar({ onSidebarOpen }: CitizenTopbarProps) {
 
                 {/* Right Side Icons */}
                 <Stack direction="row" spacing={1} alignItems="center">
-                    <IconButton size="large" color="inherit">
-                        <Badge badgeContent={0} color="error">
-                            <NotificationsIcon />
-                        </Badge>
-                    </IconButton>
+                    <NotificationDropdown />
                     <IconButton size="large" color="inherit">
                         <SettingsIcon />
                     </IconButton>

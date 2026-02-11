@@ -78,14 +78,23 @@ export const darkTheme = createTheme({
                     textTransform: "none",
                     fontWeight: 700,
                     borderRadius: "8px",
-                    boxShadow: "0 2px 8px rgba(40,102,242,0.12)",
-                    transition: "background 0.2s",
+                    boxShadow: "none",
+                    transition: "all 0.2s",
+                },
+                containedPrimary: {
                     backgroundColor: "#2866f2",
                     color: "#fff",
+                    boxShadow: "0 2px 8px rgba(40,102,242,0.12)",
                     "&:hover": {
                         backgroundColor: "#1741a6",
                     },
                 },
+                text: {
+                    backgroundColor: "transparent",
+                    "&:hover": {
+                        backgroundColor: "rgba(40, 102, 242, 0.08)",
+                    }
+                }
             },
         },
         MuiPaper: {
