@@ -31,7 +31,11 @@ import ListAltIcon from "@mui/icons-material/ListAlt";
 import { useSelector, useDispatch } from "react-redux";
 import { formatDistanceToNow } from "date-fns";
 import { markAsRead } from "@/app/services/notificationService";
-import { updateNotificationReadStatus, markAllAsReadSuccess } from "@/lib/features/notifications/notificationSlice";
+import {
+    updateNotificationReadStatus,
+    markAllAsReadSuccess,
+    Notification
+} from "@/lib/features/notifications/notificationSlice";
 import { RootState } from "@/lib/store";
 import ChatHistoryModal from "./ChatHistoryModal";
 
@@ -65,7 +69,7 @@ export default function NotificationDropdown() {
         return colors[Math.abs(hash) % colors.length];
     };
 
-    const handleNotificationClick = async (notif: any) => {
+    const handleNotificationClick = async (notif: Notification) => {
         try {
             // Mark as read first if unread
             if (!notif.read) {
@@ -73,12 +77,28 @@ export default function NotificationDropdown() {
                 dispatch(updateNotificationReadStatus({ id: notif.id, read: true }));
             }
 
-            const myId = Number(currentUser?.id);
-            const isMeSender = Number(notif.sender.id) === myId;
+            const myId = currentUser?.id ? Number(currentUser.id) : null;
+            const myName = currentUser?.fullName;
+            const senderId = notif.sender?.id ? Number(notif.sender.id) : null;
+            const senderName = notif.sender?.fullName;
+
+            // Determine if I am the sender using ID or Name as fallback
+            const isMeSender = (myId && senderId && myId === senderId) ||
+                (myName && senderName && myName === senderName);
+
             const targetUser = isMeSender ? notif.receiver : notif.sender;
 
-            setChatTarget({ id: targetUser.id, fullName: targetUser.fullName });
-            setHistoryOpen(true);
+            if (targetUser && (targetUser.id || targetUser.fullName)) {
+                setChatTarget({
+                    id: targetUser.id ? Number(targetUser.id) : 0,
+                    fullName: targetUser.fullName || "User"
+                });
+                setHistoryOpen(true);
+            } else {
+                setChatTarget(null);
+                setHistoryOpen(true);
+            }
+
             handleClose();
         } catch (error) {
             console.error("Failed to handle notification click:", error);

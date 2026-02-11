@@ -31,7 +31,8 @@ import MessageIcon from "@mui/icons-material/Message";
 import { useSelector } from "react-redux";
 import { RootState } from "@/lib/store";
 import { format } from "date-fns";
-import { getMyNotifications, Notification, sendNotification, getChatHistory } from "@/app/services/notificationService";
+import { getMyNotifications, sendNotification, getChatHistory } from "@/app/services/notificationService";
+import { Notification } from "@/lib/features/notifications/notificationSlice";
 import { useNotificationContext } from "@/components/providers/NotificationProvider";
 
 interface ChatHistoryModalProps {
@@ -64,26 +65,38 @@ export default function ChatHistoryModal({ open, onClose, initialTarget }: ChatH
         if (!token) return;
         setLoading(true);
         try {
-            let data;
-            if (target) {
+            let data: Notification[] = [];
+            const targetId = target?.id ? Number(target.id) : null;
+
+            if (targetId && targetId !== 0) {
                 // Fetch specific chat history with this person
-                data = await getChatHistory(target.id, token);
+                data = await getChatHistory(targetId, token);
             } else {
                 // Fetch all notifications (for "View All")
                 data = await getMyNotifications(token);
             }
+
             setHistory(data);
 
-            // If we don't have a target yet, pick the most recent conversation partner
-            if (!target && data.length > 0) {
-                const mostRecent = data[0];
-                const myId = Number(currentUser?.id);
-                const isMeSender = Number(mostRecent.sender.id) === myId;
-                const targetId = isMeSender ? mostRecent.receiver.id : mostRecent.sender.id;
-                const targetName = isMeSender ? mostRecent.receiver.fullName : mostRecent.sender.fullName;
+            // If we have data but no confirmed partner yet, pick the most relevant partner
+            if (data.length > 0) {
+                const myId = currentUser?.id ? Number(currentUser.id) : null;
+                const myName = currentUser?.fullName;
 
-                if (targetId) {
-                    setReplyTo({ id: targetId, fullName: targetName || "Admin" });
+                // If we don't have a target, or if the history we fetched seems to be for the wrong person
+                if (!target || target.id === 0) {
+                    const mostRecent = data[0];
+                    const senderId = mostRecent.sender?.id ? Number(mostRecent.sender.id) : null;
+                    const senderName = mostRecent.sender?.fullName;
+
+                    const isSenderMe = (myId && senderId && myId === senderId) ||
+                        (myName && senderName && myName === senderName);
+
+                    const partner = isSenderMe ? mostRecent.receiver : mostRecent.sender;
+
+                    if (partner && partner.id) {
+                        setReplyTo({ id: Number(partner.id), fullName: partner.fullName || "User" });
+                    }
                 }
             }
         } catch (error) {
@@ -95,10 +108,12 @@ export default function ChatHistoryModal({ open, onClose, initialTarget }: ChatH
 
     useEffect(() => {
         if (open && token) {
-            setReplyTo(initialTarget || null);
-            fetchHistory(initialTarget || null);
+            const effectiveTarget = initialTarget || null;
+            setReplyTo(effectiveTarget);
+            setHistory([]); // Clear while loading
+            fetchHistory(effectiveTarget);
         }
-    }, [open, token, initialTarget?.id]);
+    }, [open, token, `${initialTarget?.id}-${initialTarget?.fullName}`]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -172,7 +187,7 @@ export default function ChatHistoryModal({ open, onClose, initialTarget }: ChatH
                 </Box>
                 <Box>
                     <Tooltip title="Refresh">
-                        <MuiIconButton size="small" onClick={fetchHistory} sx={{ mr: 1 }}>
+                        <MuiIconButton size="small" onClick={() => fetchHistory()} sx={{ mr: 1 }}>
                             <RefreshIcon fontSize="small" />
                         </MuiIconButton>
                     </Tooltip>
