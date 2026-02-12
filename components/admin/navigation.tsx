@@ -22,5 +22,4 @@ export const adminNavigation = [
     { name: "Guidelines", href: "/admin/guidelines", icon: <GuidelineIcon /> },
     { name: "Fine Management", href: "/admin/fines", icon: <ReceiptIcon /> },
     { name: "Manage Violations", href: "/admin/violations", icon: <SettingsIcon /> },
-    { name: "Settings", href: "/admin/settings", icon: <SettingsIcon /> },
 ];
