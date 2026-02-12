@@ -46,27 +46,9 @@ import {
 import { format } from 'date-fns';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-
-interface Fine {
-    id: number;
-    violationType: string;
-    vehicleNumber: string;
-    amount: number;
-    location: string;
-    status: "PENDING" | "PAID";
-    issuedAt: string;
-    officer: {
-        fullName: string;
-        badgeNumber: string; // Assuming badge number is officer ID or similar
-    };
-    citizen: {
-        fullName: string;
-        nic: string;
-    }
-}
-
 import { useSelector } from "react-redux";
 import { RootState } from "@/lib/store";
+import { Fine, getAllFines, updateFine, deleteFine } from "@/app/services/fineService";
 
 export default function AdminFinesPage() {
     const [fines, setFines] = useState<Fine[]>([]);
@@ -121,16 +103,9 @@ export default function AdminFinesPage() {
 
     const fetchFines = async () => {
         try {
-            const response = await fetch("http://localhost:8080/api/fines/all", {
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setFines(data);
-                setFilteredFines(data);
-            }
+            const data = await getAllFines(token);
+            setFines(data);
+            setFilteredFines(data);
         } catch (error) {
             console.error("Error fetching fines:", error);
         } finally {
@@ -158,17 +133,9 @@ export default function AdminFinesPage() {
     const confirmDelete = async () => {
         if (deletingId === null) return;
         try {
-            const response = await fetch(`http://localhost:8080/api/fines/${deletingId}`, {
-                method: 'DELETE',
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-
-            if (response.ok) {
-                setSnackbar({ open: true, message: "Fine record deleted successfully", severity: 'success' });
-                fetchFines();
-            } else {
-                throw new Error("Failed to delete record");
-            }
+            await deleteFine(deletingId, token);
+            setSnackbar({ open: true, message: "Fine record deleted successfully", severity: 'success' });
+            fetchFines();
         } catch (error) {
             setSnackbar({ open: true, message: "Error deleting record", severity: 'error' });
         } finally {
@@ -181,22 +148,10 @@ export default function AdminFinesPage() {
         if (!editingFine) return;
 
         try {
-            const response = await fetch(`http://localhost:8080/api/fines/${editingFine.id}`, {
-                method: 'PUT',
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify(editForm)
-            });
-
-            if (response.ok) {
-                setSnackbar({ open: true, message: "Fine updated successfully", severity: 'success' });
-                setEditDialogOpen(false);
-                fetchFines();
-            } else {
-                throw new Error("Failed to update fine");
-            }
+            await updateFine(editingFine.id, editForm, token);
+            setSnackbar({ open: true, message: "Fine updated successfully", severity: 'success' });
+            setEditDialogOpen(false);
+            fetchFines();
         } catch (error) {
             setSnackbar({ open: true, message: "Error updating fine", severity: 'error' });
         }

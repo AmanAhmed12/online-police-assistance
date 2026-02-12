@@ -19,6 +19,7 @@ import {
 import { Search as SearchIcon, Receipt as ReceiptIcon, LocalPolice as PoliceIcon } from "@mui/icons-material";
 import { useSelector } from "react-redux";
 import { RootState } from "@/lib/store";
+import { checkUserForFine, issueFine } from "@/app/services/fineService";
 
 export default function IssueFinePage() {
     const [nic, setNic] = useState("");
@@ -61,20 +62,10 @@ export default function IssueFinePage() {
         setCitizen(null);
 
         try {
-            const response = await fetch(`http://localhost:8080/api/fines/check-user/${nic}`, {
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                setCitizen(data);
-            } else {
-                setError("Citizen not found. Please check the NIC.");
-            }
-        } catch (err) {
-            setError("Error connecting to server.");
+            const data = await checkUserForFine(nic, token);
+            setCitizen(data);
+        } catch (err: any) {
+            setError(err.message || "Citizen not found. Please check the NIC.");
         } finally {
             setLoading(false);
         }
@@ -98,32 +89,20 @@ export default function IssueFinePage() {
 
         setLoading(true);
         try {
-            const response = await fetch("http://localhost:8080/api/fines/issue", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    citizenNic: citizen.nic,
-                    vehicleNumber: fineDetails.vehicleNumber,
-                    violationType: fineDetails.violationType,
-                    amount: fineDetails.amount,
-                    location: fineDetails.location
-                })
-            });
+            await issueFine({
+                citizenNic: citizen.nic,
+                vehicleNumber: fineDetails.vehicleNumber,
+                violationType: fineDetails.violationType,
+                amount: fineDetails.amount,
+                location: fineDetails.location
+            }, token);
 
-            if (response.ok) {
-                setSuccess("Fine issued successfully!");
-                setCitizen(null);
-                setNic("");
-                setFineDetails({ vehicleNumber: "", violationType: "", amount: 0, location: "" });
-            } else {
-                const errData = await response.text();
-                setError("Failed to issue fine: " + errData);
-            }
-        } catch (err) {
-            setError("Something went wrong.");
+            setSuccess("Fine issued successfully!");
+            setCitizen(null);
+            setNic("");
+            setFineDetails({ vehicleNumber: "", violationType: "", amount: 0, location: "" });
+        } catch (err: any) {
+            setError(err.message || "Failed to issue fine");
         } finally {
             setLoading(false);
         }

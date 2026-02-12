@@ -23,7 +23,8 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
-    DialogActions
+    DialogActions,
+    Snackbar
 } from "@mui/material";
 import {
     Payment as PaymentIcon,
@@ -33,20 +34,9 @@ import {
     History as HistoryIcon
 } from "@mui/icons-material";
 
-interface Fine {
-    id: number;
-    violationType: string;
-    vehicleNumber: string;
-    amount: number;
-    location: string;
-    status: "PENDING" | "PAID";
-    issuedAt: string;
-    razorpayPaymentId?: string;
-    paidAt?: string;
-}
-
 import { useSelector } from "react-redux";
 import { RootState } from "@/lib/store";
+import { Fine, getMyFines, verifyFinePayment } from "@/app/services/fineService";
 
 export default function MyFinesPage() {
     const [fines, setFines] = useState<Fine[]>([]);
@@ -56,6 +46,11 @@ export default function MyFinesPage() {
     // Payment State
     const [selectedFine, setSelectedFine] = useState<Fine | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [snackbar, setSnackbar] = useState({
+        open: false,
+        message: "",
+        severity: "success" as "success" | "error"
+    });
 
     const token = useSelector((state: RootState) => state.auth.user?.token);
     const user = useSelector((state: RootState) => state.auth.user);
@@ -63,14 +58,23 @@ export default function MyFinesPage() {
     useEffect(() => {
         if (token) fetchFines();
 
-        // Setup PayHere Global Listeners
+        // Handle Redirect Return from PayHere
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderIdParam = urlParams.get('order_id');
+        if (orderIdParam && token) {
+            console.log("Detected return from PayHere, verifying order:", orderIdParam);
+            verifyPayment(parseInt(orderIdParam), "PAYHERE_RETURN_" + orderIdParam);
+            // Clear URL params
+            window.history.replaceState({}, '', window.location.pathname);
+        }
+
+        // Setup PayHere Global Listeners (For Modal)
         if (typeof window !== 'undefined') {
             (window as any).payhere = (window as any).payhere || {};
 
             (window as any).payhere.onCompleted = function onCompleted(orderId: string) {
                 console.log("Payment completed. OrderID:" + orderId);
-                // We use the orderId (which is fineId in our case) to verify
-                verifyPayment(parseInt(orderId), "PAYHERE_" + orderId);
+                verifyPayment(parseInt(orderId), "PAYHERE_MODAL_" + orderId);
             };
 
             (window as any).payhere.onDismissed = function onDismissed() {
@@ -88,19 +92,10 @@ export default function MyFinesPage() {
 
     const fetchFines = async () => {
         try {
-            const response = await fetch("http://localhost:8080/api/fines/my-fines", {
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setFines(data);
-            } else {
-                setError("Failed to load fines.");
-            }
+            const data = await getMyFines(token);
+            setFines(data);
         } catch (err) {
-            setError("Error connecting to server.");
+            setError("Failed to load fines.");
         } finally {
             setLoading(false);
         }
@@ -127,11 +122,11 @@ export default function MyFinesPage() {
 
             // 2. Prepare PayHere Object
             const payment = {
-                sandbox: true, // Set to false for production
-                merchant_id: process.env.NEXT_PUBLIC_PAYHERE_MERCHANT_ID, // My Sandbox Merchant ID
+                sandbox: true,
+                merchant_id: process.env.NEXT_PUBLIC_PAYHERE_MERCHANT_ID,
                 return_url: window.location.origin + "/citizen/fines",
                 cancel_url: window.location.origin + "/citizen/fines",
-                notify_url: "http://localhost:8080/api/fines/payhere-notify", // Backend webhook (optional/manual for demo)
+                notify_url: "http://localhost:8080/api/fines/payhere-notify",
                 order_id: fine.id.toString(),
                 items: "Traffic Fine: " + fine.violationType,
                 amount: fine.amount.toFixed(2),
@@ -150,31 +145,21 @@ export default function MyFinesPage() {
             (window as any).payhere.startPayment(payment);
         } catch (err) {
             console.error(err);
-            alert("Could not initiate payment. Please try again.");
+            setSnackbar({ open: true, message: "Could not initiate payment. Please try again.", severity: "error" });
             setIsProcessing(false);
         }
     };
 
     const verifyPayment = async (fineId: number, paymentId: string) => {
+        if (isNaN(fineId)) return;
         try {
-            const response = await fetch(`http://localhost:8080/api/fines/${fineId}/pay`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify({ paymentId })
-            });
-
-            if (response.ok) {
-                fetchFines(); // Refresh list
-                setIsProcessing(false);
-            } else {
-                alert("Payment verification failed on server.");
-                setIsProcessing(false);
-            }
+            await verifyFinePayment(fineId, paymentId, token);
+            setSnackbar({ open: true, message: "Payment successful! Your fine has been marked as PAID.", severity: "success" });
+            fetchFines(); // Refresh list
+            setIsProcessing(false);
         } catch (error) {
             console.error("Payment error", error);
+            setSnackbar({ open: true, message: "Verification failed. Please contact support if the amount was deducted.", severity: "error" });
             setIsProcessing(false);
         }
     };
@@ -346,7 +331,7 @@ export default function MyFinesPage() {
                                     <Typography variant="body2" sx={{ color: 'var(--fg-main)', fontWeight: 500 }}>{fine.violationType}</Typography>
                                 </TableCell>
                                 <TableCell sx={{ color: 'var(--fg-secondary)', borderBottom: '1px solid var(--border-light)', py: 2.5 }}>{fine.paidAt ? new Date(fine.paidAt).toLocaleDateString() : '-'}</TableCell>
-                                <TableCell sx={{ color: 'var(--fg-secondary)', fontFamily: 'monospace', borderBottom: '1px solid var(--border-light)', py: 2.5 }}>{fine.razorpayPaymentId}</TableCell>
+                                <TableCell sx={{ color: 'var(--fg-secondary)', fontFamily: 'monospace', borderBottom: '1px solid var(--border-light)', py: 2.5 }}>{fine.paymentGatewayId}</TableCell>
                                 <TableCell sx={{ color: 'var(--fg-main)', fontWeight: 600, borderBottom: '1px solid var(--border-light)', py: 2.5 }}>LKR {fine.amount}</TableCell>
                                 <TableCell sx={{ borderBottom: '1px solid var(--border-light)', py: 2.5 }}>
                                     <Chip
@@ -380,6 +365,21 @@ export default function MyFinesPage() {
                 src="https://www.payhere.lk/lib/payhere.js"
                 strategy="lazyOnload"
             />
+
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={6000}
+                onClose={() => setSnackbar({ ...snackbar, open: false })}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            >
+                <Alert
+                    onClose={() => setSnackbar({ ...snackbar, open: false })}
+                    severity={snackbar.severity}
+                    sx={{ width: '100%', borderRadius: '12px', bgcolor: snackbar.severity === 'success' ? '#10B981' : '#EF4444', color: 'white' }}
+                >
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
         </Box>
     );
 }
