@@ -8,7 +8,8 @@ import {
     ContactPhone as ContactPhoneIcon,
     Campaign as CampaignIcon,
     MenuBook as GuidelineIcon,
-    Receipt as ReceiptIcon
+    Receipt as ReceiptIcon,
+    Warning
 } from "@mui/icons-material";
 
 export const adminNavigation = [
@@ -21,5 +22,5 @@ export const adminNavigation = [
     { name: "Notices", href: "/admin/notices", icon: <CampaignIcon /> },
     { name: "Guidelines", href: "/admin/guidelines", icon: <GuidelineIcon /> },
     { name: "Fine Management", href: "/admin/fines", icon: <ReceiptIcon /> },
-    { name: "Manage Violations", href: "/admin/violations", icon: <SettingsIcon /> },
+    { name: "Manage Violations", href: "/admin/violations", icon: <Warning /> },
 ];
