@@ -7,7 +7,8 @@ import {
     Gavel as GavelIcon,
     ContactPhone as ContactPhoneIcon,
     Campaign as CampaignIcon,
-    MenuBook as GuidelineIcon
+    MenuBook as GuidelineIcon,
+    Receipt as ReceiptIcon
 } from "@mui/icons-material";
 
 export const adminNavigation = [
@@ -19,5 +20,7 @@ export const adminNavigation = [
     { name: "Emergency Contacts", href: "/admin/emergency-contacts", icon: <ContactPhoneIcon /> },
     { name: "Notices", href: "/admin/notices", icon: <CampaignIcon /> },
     { name: "Guidelines", href: "/admin/guidelines", icon: <GuidelineIcon /> },
+    { name: "Fine Management", href: "/admin/fines", icon: <ReceiptIcon /> },
+    { name: "Manage Violations", href: "/admin/violations", icon: <SettingsIcon /> },
     { name: "Settings", href: "/admin/settings", icon: <SettingsIcon /> },
 ];

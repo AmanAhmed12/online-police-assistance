@@ -25,6 +25,7 @@ import { logout } from '@/lib/features/auth/authSlice';
 import { logoutUser } from '@/app/services/authService';
 import { RootState } from "@/lib/store";
 import NotificationDropdown from "@/components/common/NotificationDropdown";
+import Link from "next/link";
 
 const Search = styled('div')(({ theme }) => ({
     position: 'relative',
@@ -136,7 +137,7 @@ export default function CitizenTopbar({ onSidebarOpen }: CitizenTopbarProps) {
                 {/* Right Side Icons */}
                 <Stack direction="row" spacing={1} alignItems="center">
                     <NotificationDropdown />
-                    <IconButton size="large" color="inherit">
+                    <IconButton size="large" color="inherit" component={Link} href="/citizen/settings">
                         <SettingsIcon />
                     </IconButton>
 

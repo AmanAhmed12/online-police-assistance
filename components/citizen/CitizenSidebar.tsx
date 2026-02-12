@@ -37,7 +37,7 @@ export default function CitizenSidebar({ open, onClose }: CitizenSidebarProps) {
             {/* Brand area */}
             <Box
                 sx={{
-                    p: 3,
+                    p: 2,
                     display: "flex",
                     alignItems: "center",
                     gap: 2,
@@ -67,10 +67,10 @@ export default function CitizenSidebar({ open, onClose }: CitizenSidebarProps) {
                 )}
             </Box>
 
-            <Divider sx={{ mb: 2 }} />
+            <Divider sx={{ mb: 1 }} />
 
             {/* Navigation Links */}
-            <List component="nav" sx={{ flexGrow: 1, px: 2 }}>
+            <List component="nav" sx={{ flexGrow: 1, px: 1 }}>
                 {citizenNavigation.map((item) => {
                     const isActive = pathname === item.href;
                     return (
@@ -98,7 +98,7 @@ export default function CitizenSidebar({ open, onClose }: CitizenSidebarProps) {
             {/* Footer / Info */}
             <Box sx={{ p: 2 }}>
                 <Box sx={{
-                    p: 2,
+                    p: 1,
                     borderRadius: '12px',
                     bgcolor: 'rgba(40,102,242,0.08)',
                     border: '1px solid rgba(40,102,242,0.1)',

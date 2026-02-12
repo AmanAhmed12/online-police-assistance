@@ -7,7 +7,8 @@ import {
     Info as InfoIcon,
     Android as SmartToyIcon,
     PostAdd as PostAddIcon,
-    Campaign as CampaignIcon
+    Campaign as CampaignIcon,
+    Payment as PaymentIcon
 } from "@mui/icons-material";
 
 export const citizenNavigation = [
@@ -15,9 +16,10 @@ export const citizenNavigation = [
     { name: "File Complaint", href: "/citizen/complaint/new", icon: <FileComplaintIcon /> },
     { name: "Request Report", href: "/citizen/report", icon: <PostAddIcon /> },
     { name: "My Complaints", href: "/citizen/complaints", icon: <MyComplaintsIcon /> },
-    { name: "Emergency Contacts", href: "/citizen/emergency", icon: <EmergencyIcon /> },
-    { name: "Chat With AI For LAW", href: "/citizen/chat", icon: <SmartToyIcon /> },
+    { name: "Emergency Line", href: "/citizen/emergency", icon: <EmergencyIcon /> },
+    { name: "Chat AI For LAW", href: "/citizen/chat", icon: <SmartToyIcon /> },
     { name: "Suspect Details", href: "/citizen/suspect-details", icon: <ProfileIcon /> },
     { name: "Guidelines", href: "/citizen/guidelines", icon: <InfoIcon /> },
     { name: "Notices", href: "/citizen/notices", icon: <CampaignIcon /> },
+    { name: "My Fines", href: "/citizen/fines", icon: <PaymentIcon /> },
 ];
