@@ -14,6 +14,11 @@ import {
     TableHead,
     TableRow,
     Paper,
+    TablePagination,
+    IconButton,
+    Tooltip,
+    Snackbar,
+    Alert,
     CircularProgress,
     Chip,
     InputAdornment,
@@ -27,7 +32,6 @@ import {
     FormControl,
     InputLabel,
     Button,
-    TablePagination,
 } from "@mui/material";
 import {
     Search as SearchIcon,
@@ -35,7 +39,9 @@ import {
     Warning as PendingIcon,
     AttachMoney as RevenueIcon,
     Receipt as ReceiptIcon,
-    Download as DownloadIcon
+    Download as DownloadIcon,
+    Edit as EditIcon,
+    Delete as DeleteIcon
 } from "@mui/icons-material";
 import { format } from 'date-fns';
 import jsPDF from 'jspdf';
@@ -75,6 +81,27 @@ export default function AdminFinesPage() {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
+    // Edit State
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
+    const [editingFine, setEditingFine] = useState<Fine | null>(null);
+    const [editForm, setEditForm] = useState({
+        vehicleNumber: '',
+        violationType: '',
+        amount: 0,
+        location: '',
+        status: 'PENDING'
+    });
+
+    const [snackbar, setSnackbar] = useState({
+        open: false,
+        message: '',
+        severity: 'success' as 'success' | 'error'
+    });
+
+    // Delete Confirmation State
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [deletingId, setDeletingId] = useState<number | null>(null);
+
     const token = useSelector((state: RootState) => state.auth.user?.token);
 
     useEffect(() => {
@@ -108,6 +135,70 @@ export default function AdminFinesPage() {
             console.error("Error fetching fines:", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleEditClick = (fine: Fine) => {
+        setEditingFine(fine);
+        setEditForm({
+            vehicleNumber: fine.vehicleNumber,
+            violationType: fine.violationType,
+            amount: fine.amount,
+            location: fine.location,
+            status: fine.status
+        });
+        setEditDialogOpen(true);
+    };
+
+    const handleDeleteClick = (id: number) => {
+        setDeletingId(id);
+        setDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (deletingId === null) return;
+        try {
+            const response = await fetch(`http://localhost:8080/api/fines/${deletingId}`, {
+                method: 'DELETE',
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                setSnackbar({ open: true, message: "Fine record deleted successfully", severity: 'success' });
+                fetchFines();
+            } else {
+                throw new Error("Failed to delete record");
+            }
+        } catch (error) {
+            setSnackbar({ open: true, message: "Error deleting record", severity: 'error' });
+        } finally {
+            setDeleteDialogOpen(false);
+            setDeletingId(null);
+        }
+    };
+
+    const handleUpdateFine = async () => {
+        if (!editingFine) return;
+
+        try {
+            const response = await fetch(`http://localhost:8080/api/fines/${editingFine.id}`, {
+                method: 'PUT',
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify(editForm)
+            });
+
+            if (response.ok) {
+                setSnackbar({ open: true, message: "Fine updated successfully", severity: 'success' });
+                setEditDialogOpen(false);
+                fetchFines();
+            } else {
+                throw new Error("Failed to update fine");
+            }
+        } catch (error) {
+            setSnackbar({ open: true, message: "Error updating fine", severity: 'error' });
         }
     };
 
@@ -375,6 +466,7 @@ export default function AdminFinesPage() {
                             <TableCell sx={{ color: 'var(--fg-secondary)', borderBottom: '1px solid var(--border-light)' }}><strong>Issued By</strong></TableCell>
                             <TableCell sx={{ color: 'var(--fg-secondary)', borderBottom: '1px solid var(--border-light)' }}><strong>Date</strong></TableCell>
                             <TableCell sx={{ color: 'var(--fg-secondary)', borderBottom: '1px solid var(--border-light)' }}><strong>Status</strong></TableCell>
+                            <TableCell sx={{ color: 'var(--fg-secondary)', borderBottom: '1px solid var(--border-light)', textAlign: 'center' }}><strong>Actions</strong></TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -415,6 +507,20 @@ export default function AdminFinesPage() {
                                                 '& .MuiChip-icon': { color: 'inherit' }
                                             }}
                                         />
+                                    </TableCell>
+                                    <TableCell sx={{ borderBottom: '1px solid var(--border-light)', textAlign: 'center' }}>
+                                        <Box display="flex" justifyContent="center" gap={1}>
+                                            <Tooltip title="Edit Fine">
+                                                <IconButton size="small" onClick={() => handleEditClick(fine)} sx={{ color: '#3B82F6', '&:hover': { bgcolor: 'rgba(59,130,246,0.1)' } }}>
+                                                    <EditIcon fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
+                                            <Tooltip title="Soft Delete">
+                                                <IconButton size="small" onClick={() => handleDeleteClick(fine.id)} sx={{ color: '#EF4444', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.1)' } }}>
+                                                    <DeleteIcon fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </Box>
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -502,6 +608,142 @@ export default function AdminFinesPage() {
                         }}
                     >
                         {generating ? "Generating..." : "Generate PDF"}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Edit Fine Dialog */}
+            <Dialog
+                open={editDialogOpen}
+                onClose={() => setEditDialogOpen(false)}
+                maxWidth="sm"
+                fullWidth
+                PaperProps={{
+                    sx: { borderRadius: 3, bgcolor: 'var(--bg-surface)', border: '1px solid var(--border-medium)' }
+                }}
+            >
+                <DialogTitle sx={{ fontWeight: 'bold', borderBottom: '1px solid var(--border-light)', color: 'var(--fg-main)' }}>
+                    Edit Fine Details
+                </DialogTitle>
+                <DialogContent sx={{ mt: 2 }}>
+                    <Box display="flex" flexDirection="column" gap={3} sx={{ mt: 1 }}>
+                        <TextField
+                            label="Vehicle Number"
+                            fullWidth
+                            value={editForm.vehicleNumber}
+                            onChange={(e) => setEditForm({ ...editForm, vehicleNumber: e.target.value })}
+                        />
+                        <TextField
+                            label="Violation Type"
+                            fullWidth
+                            disabled
+                            value={editForm.violationType}
+                            onChange={(e) => setEditForm({ ...editForm, violationType: e.target.value })}
+                        />
+                        <TextField
+                            label="Fine Amount (LKR)"
+                            type="number"
+                            fullWidth
+                            disabled
+                            value={editForm.amount}
+                            onChange={(e) => setEditForm({ ...editForm, amount: Number(e.target.value) })}
+                        />
+                        <TextField
+                            label="Location"
+                            fullWidth
+                            disabled
+                            value={editForm.location}
+                            onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
+                        />
+                        <FormControl fullWidth>
+                            <InputLabel>Status</InputLabel>
+                            <Select
+                                value={editForm.status}
+                                label="Status"
+                                onChange={(e) => setEditForm({ ...editForm, status: e.target.value as any })}
+                            >
+                                <MenuItem value="PENDING">PENDING</MenuItem>
+                                <MenuItem value="PAID">PAID</MenuItem>
+                            </Select>
+                        </FormControl>
+                    </Box>
+                </DialogContent>
+                <DialogActions sx={{ p: 3, pt: 1, borderTop: '1px solid var(--border-light)' }}>
+                    <Button onClick={() => setEditDialogOpen(false)} sx={{ color: 'var(--fg-secondary)' }}>Cancel</Button>
+                    <Button
+                        onClick={handleUpdateFine}
+                        variant="contained"
+                        sx={{ borderRadius: 2, px: 4, bgcolor: '#3B82F6' }}
+                    >
+                        Save Changes
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={4000}
+                onClose={() => setSnackbar({ ...snackbar, open: false })}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            >
+                <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: '100%', borderRadius: 2 }}>
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
+
+            {/* Beautiful Delete Confirmation Dialog */}
+            <Dialog
+                open={deleteDialogOpen}
+                onClose={() => setDeleteDialogOpen(false)}
+                PaperProps={{
+                    sx: {
+                        borderRadius: 3,
+                        bgcolor: 'var(--bg-surface)',
+                        border: '1px solid var(--border-medium)',
+                        backgroundImage: 'none',
+                        maxWidth: '400px'
+                    }
+                }}
+            >
+                <DialogTitle sx={{
+                    color: '#EF4444',
+                    fontWeight: 800,
+                    fontSize: '1.25rem',
+                    pb: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.5
+                }}>
+                    <DeleteIcon sx={{ fontSize: 28 }} />
+                    Delete Record?
+                </DialogTitle>
+                <DialogContent>
+                    <Typography sx={{ color: 'var(--fg-secondary)', lineHeight: 1.6 }}>
+                        Are you sure you want to delete this fine record? This will hide the record from standard views.
+                        <strong> This action is reversible but should be handled with care.</strong>
+                    </Typography>
+                </DialogContent>
+                <DialogActions sx={{ p: 3, pt: 1 }}>
+                    <Button
+                        onClick={() => setDeleteDialogOpen(false)}
+                        sx={{ color: 'var(--fg-secondary)', textTransform: 'none', fontWeight: 600 }}
+                    >
+                        Keep Record
+                    </Button>
+                    <Button
+                        onClick={confirmDelete}
+                        variant="contained"
+                        sx={{
+                            bgcolor: '#EF4444',
+                            '&:hover': { bgcolor: '#DC2626' },
+                            borderRadius: 2,
+                            px: 3,
+                            textTransform: 'none',
+                            fontWeight: 700,
+                            boxShadow: '0 4px 12px rgba(239, 68, 68, 0.25)'
+                        }}
+                    >
+                        Delete Permanently
                     </Button>
                 </DialogActions>
             </Dialog>
