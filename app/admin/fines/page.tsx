@@ -27,6 +27,7 @@ import {
     FormControl,
     InputLabel,
     Button,
+    TablePagination,
 } from "@mui/material";
 import {
     Search as SearchIcon,
@@ -70,6 +71,10 @@ export default function AdminFinesPage() {
     const [reportType, setReportType] = useState('Full Fines Report');
     const [generating, setGenerating] = useState(false);
 
+    // Pagination State
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
+
     const token = useSelector((state: RootState) => state.auth.user?.token);
 
     useEffect(() => {
@@ -84,6 +89,7 @@ export default function AdminFinesPage() {
             f.citizen.nic.toLowerCase().includes(lowerSearch)
         );
         setFilteredFines(filtered);
+        setPage(0); // Reset to first page on search
     }, [searchTerm, fines]);
 
     const fetchFines = async () => {
@@ -372,44 +378,46 @@ export default function AdminFinesPage() {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {filteredFines.map((fine) => (
-                            <TableRow key={fine.id} hover sx={{ '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.02) !important' } }}>
-                                <TableCell sx={{ color: 'var(--fg-main)', borderBottom: '1px solid var(--border-light)' }}>#{fine.id}</TableCell>
-                                <TableCell sx={{ color: 'var(--fg-main)', borderBottom: '1px solid var(--border-light)' }}>
-                                    <Typography variant="body2" fontWeight="bold">{fine.citizen.fullName}</Typography>
-                                    <Typography variant="caption" sx={{ color: 'var(--fg-secondary)' }}>{fine.citizen.nic}</Typography>
-                                </TableCell>
-                                <TableCell sx={{ color: 'var(--fg-main)', borderBottom: '1px solid var(--border-light)' }}>{fine.vehicleNumber}</TableCell>
-                                <TableCell sx={{ color: 'var(--fg-main)', borderBottom: '1px solid var(--border-light)' }}>
-                                    <Chip
-                                        label={fine.violationType}
-                                        size="small"
-                                        sx={{
-                                            bgcolor: 'rgba(59, 130, 246, 0.1)',
-                                            color: '#60A5FA',
-                                            border: '1px solid rgba(59, 130, 246, 0.2)'
-                                        }}
-                                    />
-                                </TableCell>
-                                <TableCell sx={{ color: 'var(--fg-main)', fontWeight: 'bold', borderBottom: '1px solid var(--border-light)' }}>LKR {fine.amount.toLocaleString()}</TableCell>
-                                <TableCell sx={{ color: 'var(--fg-secondary)', borderBottom: '1px solid var(--border-light)' }}>{fine.officer.fullName}</TableCell>
-                                <TableCell sx={{ color: 'var(--fg-secondary)', borderBottom: '1px solid var(--border-light)' }}>{new Date(fine.issuedAt).toLocaleDateString()}</TableCell>
-                                <TableCell sx={{ borderBottom: '1px solid var(--border-light)' }}>
-                                    <Chip
-                                        label={fine.status}
-                                        size="small"
-                                        variant="outlined"
-                                        icon={fine.status === "PAID" ? <PaidIcon fontSize="small" /> : <PendingIcon fontSize="small" />}
-                                        sx={{
-                                            fontWeight: 700,
-                                            borderColor: fine.status === "PAID" ? '#10B981' : '#EF4444',
-                                            color: fine.status === "PAID" ? '#10B981' : '#EF4444',
-                                            '& .MuiChip-icon': { color: 'inherit' }
-                                        }}
-                                    />
-                                </TableCell>
-                            </TableRow>
-                        ))}
+                        {filteredFines
+                            .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                            .map((fine) => (
+                                <TableRow key={fine.id} hover sx={{ '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.02) !important' } }}>
+                                    <TableCell sx={{ color: 'var(--fg-main)', borderBottom: '1px solid var(--border-light)' }}>#{fine.id}</TableCell>
+                                    <TableCell sx={{ color: 'var(--fg-main)', borderBottom: '1px solid var(--border-light)' }}>
+                                        <Typography variant="body2" fontWeight="bold">{fine.citizen.fullName}</Typography>
+                                        <Typography variant="caption" sx={{ color: 'var(--fg-secondary)' }}>{fine.citizen.nic}</Typography>
+                                    </TableCell>
+                                    <TableCell sx={{ color: 'var(--fg-main)', borderBottom: '1px solid var(--border-light)' }}>{fine.vehicleNumber}</TableCell>
+                                    <TableCell sx={{ color: 'var(--fg-main)', borderBottom: '1px solid var(--border-light)' }}>
+                                        <Chip
+                                            label={fine.violationType}
+                                            size="small"
+                                            sx={{
+                                                bgcolor: 'rgba(59, 130, 246, 0.1)',
+                                                color: '#60A5FA',
+                                                border: '1px solid rgba(59, 130, 246, 0.2)'
+                                            }}
+                                        />
+                                    </TableCell>
+                                    <TableCell sx={{ color: 'var(--fg-main)', fontWeight: 'bold', borderBottom: '1px solid var(--border-light)' }}>LKR {fine.amount.toLocaleString()}</TableCell>
+                                    <TableCell sx={{ color: 'var(--fg-secondary)', borderBottom: '1px solid var(--border-light)' }}>{fine.officer.fullName}</TableCell>
+                                    <TableCell sx={{ color: 'var(--fg-secondary)', borderBottom: '1px solid var(--border-light)' }}>{new Date(fine.issuedAt).toLocaleDateString()}</TableCell>
+                                    <TableCell sx={{ borderBottom: '1px solid var(--border-light)' }}>
+                                        <Chip
+                                            label={fine.status}
+                                            size="small"
+                                            variant="outlined"
+                                            icon={fine.status === "PAID" ? <PaidIcon fontSize="small" /> : <PendingIcon fontSize="small" />}
+                                            sx={{
+                                                fontWeight: 700,
+                                                borderColor: fine.status === "PAID" ? '#10B981' : '#EF4444',
+                                                color: fine.status === "PAID" ? '#10B981' : '#EF4444',
+                                                '& .MuiChip-icon': { color: 'inherit' }
+                                            }}
+                                        />
+                                    </TableCell>
+                                </TableRow>
+                            ))}
                         {filteredFines.length === 0 && (
                             <TableRow>
                                 <TableCell colSpan={8} align="center" sx={{ color: 'var(--fg-secondary)', py: 5, borderBottom: 'none' }}>
@@ -420,6 +428,25 @@ export default function AdminFinesPage() {
                     </TableBody>
                 </Table>
             </TableContainer>
+
+            <TablePagination
+                rowsPerPageOptions={[5, 10, 25, 50]}
+                component="div"
+                count={filteredFines.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={(_, newPage) => setPage(newPage)}
+                onRowsPerPageChange={(e) => {
+                    setRowsPerPage(parseInt(e.target.value, 10));
+                    setPage(0);
+                }}
+                sx={{
+                    color: 'var(--fg-secondary)',
+                    borderTop: '1px solid var(--border-light)',
+                    '.MuiTablePagination-selectIcon': { color: 'var(--fg-secondary)' },
+                    '.MuiTablePagination-actions': { color: 'var(--fg-secondary)' }
+                }}
+            />
 
             {/* Report Selection Dialog */}
             <Dialog
