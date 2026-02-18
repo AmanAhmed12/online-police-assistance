@@ -9,6 +9,7 @@ import {
     setLoading,
     setError
 } from "@/lib/features/notifications/notificationSlice";
+import { logout } from "@/lib/features/auth/authSlice";
 import { getMyNotifications } from "@/app/services/notificationService";
 import { Snackbar, Alert, Typography, Box } from "@mui/material";
 
@@ -31,6 +32,16 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         if (!token) return;
 
         try {
+            // Proactive check for token expiration
+            const tokenParts = token.split('.');
+            if (tokenParts.length === 3) {
+                const payload = JSON.parse(atob(tokenParts[1]));
+                if (payload.exp && payload.exp * 1000 < Date.now()) {
+                    dispatch(logout());
+                    return;
+                }
+            }
+
             if (isInitial) dispatch(setLoading(true));
             const data = await getMyNotifications(token);
 
@@ -58,6 +69,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
             dispatch(setNotifications(data));
         } catch (error: any) {
+            if (error.message === "Unauthorized") {
+                dispatch(logout());
+                return;
+            }
             console.error("Failed to fetch notifications:", error);
             dispatch(setError(error.message));
         } finally {

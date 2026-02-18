@@ -40,6 +40,10 @@ export const getMyNotifications = async (token?: string) => {
         headers: getAuthHeader(token),
     });
 
+    if (response.status === 401) {
+        throw new Error("Unauthorized");
+    }
+
     if (!response.ok) {
         throw new Error("Failed to fetch notifications");
     }
@@ -50,6 +54,10 @@ export const getUnreadNotifications = async (token?: string) => {
     const response = await fetch(`${API_BASE_URL}/api/notifications/unread`, {
         headers: getAuthHeader(token),
     });
+
+    if (response.status === 401) {
+        throw new Error("Unauthorized");
+    }
 
     if (!response.ok) {
         throw new Error("Failed to fetch unread notifications");
@@ -63,6 +71,10 @@ export const markAsRead = async (id: number, token?: string) => {
         headers: getAuthHeader(token),
     });
 
+    if (response.status === 401) {
+        throw new Error("Unauthorized");
+    }
+
     if (!response.ok) {
         throw new Error("Failed to mark as read");
     }
@@ -72,6 +84,10 @@ export const getChatHistory = async (otherUserId: number, token?: string) => {
     const response = await fetch(`${API_BASE_URL}/api/notifications/chat/${otherUserId}`, {
         headers: getAuthHeader(token),
     });
+
+    if (response.status === 401) {
+        throw new Error("Unauthorized");
+    }
 
     if (!response.ok) {
         throw new Error("Failed to fetch chat history");
