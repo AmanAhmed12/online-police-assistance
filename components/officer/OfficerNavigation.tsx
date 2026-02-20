@@ -3,6 +3,7 @@ import {
     Assignment as AssignmentIcon,
     EventNote as ScheduleIcon,
     Campaign as CampaignIcon,
+    ContactPhone as ContactPhoneIcon,
     ReportProblem as ReportIcon,
     Settings as SettingsIcon,
     Receipt as ReceiptIcon,
@@ -14,5 +15,6 @@ export const officerNavigation = [
     { name: "Reports", href: "/officer/reports", icon: <ReportIcon /> },
     { name: "Issue Fine", href: "/officer/fines", icon: <ReceiptIcon /> },
     { name: "Notices", href: "/officer/notices", icon: <CampaignIcon /> },
+    { name: "Emergency Contacts", href: "/admin/emergency-contacts", icon: <ContactPhoneIcon /> },
     { name: "Settings", href: "/officer/settings", icon: <SettingsIcon /> },
 ];
