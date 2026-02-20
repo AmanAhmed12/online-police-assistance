@@ -33,7 +33,7 @@ export default function AdminSidebar({ open, onClose }: AdminSidebarProps) {
     const pathname = usePathname();
 
     const DrawerContent = (
-        <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+        <Box sx={{ height: "100%", display: "flex", flexDirection: "column", overflow: "hidden" }}>
             {/* Brand area */}
             <Box
                 sx={{
@@ -78,8 +78,13 @@ export default function AdminSidebar({ open, onClose }: AdminSidebarProps) {
                             <ListItemButton
                                 selected={isActive}
                                 onClick={isMobile ? onClose : undefined}
+                                sx={{
+                                    py: 0.5,
+                                    my: 0.25,
+                                    borderRadius: 1
+                                }}
                             >
-                                <ListItemIcon sx={{ color: isActive ? 'primary.main' : 'white' }}>{item.icon}</ListItemIcon>
+                                <ListItemIcon sx={{ color: isActive ? 'primary.main' : 'white', minWidth: 40 }}>{item.icon}</ListItemIcon>
                                 <ListItemText
                                     primary={item.name}
                                     sx={{
@@ -146,7 +151,8 @@ export default function AdminSidebar({ open, onClose }: AdminSidebarProps) {
                     "& .MuiDrawer-paper": {
                         boxSizing: "border-box",
                         width: DRAWER_WIDTH,
-                        borderRight: '1px solid rgba(255,255,255,0.08)'
+                        borderRight: '1px solid rgba(255,255,255,0.08)',
+                        overflow: 'hidden'
                     },
                 }}
                 open
