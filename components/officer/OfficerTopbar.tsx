@@ -172,8 +172,8 @@ export default function OfficerTopbar({ onSidebarOpen }: OfficerTopbarProps) {
                                 }
                             }}
                         >
-                            <MenuItem onClick={handleMenuClose}>My Duties</MenuItem>
-                            <MenuItem onClick={handleMenuClose}>My Profile</MenuItem>
+                            <MenuItem onClick={() => { handleMenuClose(); router.push('/officer/duties'); }}>My Duties</MenuItem>
+                            <MenuItem onClick={() => { handleMenuClose(); router.push('/officer/settings'); }}>My Profile</MenuItem>
                             <Divider />
                             <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>Logout</MenuItem>
                         </Menu>

@@ -7,10 +7,12 @@ import {
     ReportProblem as ReportIcon,
     Settings as SettingsIcon,
     Receipt as ReceiptIcon,
+    Work as WorkIcon
 } from "@mui/icons-material";
 
 export const officerNavigation = [
     { name: "Dashboard", href: "/officer", icon: <DashboardIcon /> },
+    { name: "My Duties", href: "/officer/duties", icon: <WorkIcon /> },
     { name: "My Cases", href: "/officer/cases", icon: <AssignmentIcon /> },
     { name: "Reports", href: "/officer/reports", icon: <ReportIcon /> },
     { name: "Issue Fine", href: "/officer/fines", icon: <ReceiptIcon /> },
