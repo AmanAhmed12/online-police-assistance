@@ -74,6 +74,19 @@ export const getMyFines = async (token?: string) => {
     return await response.json();
 };
 
+export const getIssuedFines = async (token?: string) => {
+    const response = await fetch(`${API_BASE_URL}/api/fines/issued-fines`, {
+        headers: {
+            "Authorization": `Bearer ${token}`
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error("Failed to fetch issued fines");
+    }
+    return await response.json();
+};
+
 export const verifyFinePayment = async (fineId: number, paymentId: string, token?: string) => {
     const response = await fetch(`${API_BASE_URL}/api/fines/${fineId}/pay`, {
         method: "POST",

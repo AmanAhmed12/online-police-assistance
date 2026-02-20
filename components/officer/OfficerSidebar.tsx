@@ -35,8 +35,19 @@ export default function OfficerSidebar({ open, onClose }: OfficerSidebarProps) {
     const pathname = usePathname();
     const loggedInUser = useSelector((state: RootState) => state.auth.user);
 
-    // We can fallback array checks but redux ID should exist on user
-    const actualId = loggedInUser?.id || "N/A";
+    const [actualId, setActualId] = React.useState<string | number>("N/A");
+
+    React.useEffect(() => {
+        if (loggedInUser?.id) {
+            setActualId(loggedInUser.id);
+        } else if (loggedInUser?.token) {
+            import('@/app/services/authService').then(({ getProfile }) => {
+                getProfile(loggedInUser.token!).then(profile => {
+                    if (profile?.id) setActualId(profile.id);
+                }).catch(err => console.error("Could not fetch profile", err));
+            });
+        }
+    }, [loggedInUser]);
 
     const DrawerContent = (
         <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
