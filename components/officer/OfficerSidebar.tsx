@@ -19,6 +19,8 @@ import { usePathname } from "next/navigation";
 import CloseIcon from "@mui/icons-material/Close";
 import LocalPoliceIcon from '@mui/icons-material/LocalPolice';
 import { officerNavigation } from "./OfficerNavigation";
+import { useSelector } from "react-redux";
+import { RootState } from "@/lib/store";
 
 const DRAWER_WIDTH = 280;
 
@@ -31,6 +33,10 @@ export default function OfficerSidebar({ open, onClose }: OfficerSidebarProps) {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("md"));
     const pathname = usePathname();
+    const loggedInUser = useSelector((state: RootState) => state.auth.user);
+
+    // We can fallback array checks but redux ID should exist on user
+    const actualId = loggedInUser?.id || "N/A";
 
     const DrawerContent = (
         <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
@@ -105,7 +111,7 @@ export default function OfficerSidebar({ open, onClose }: OfficerSidebarProps) {
                     textAlign: 'center'
                 }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'white' }}>
-                        Officer ID: 4192
+                        Officer ID: {actualId}
                     </Typography>
                     <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.7)', display: 'block', mt: 0.5 }}>
                         On Duty
