@@ -37,6 +37,7 @@ interface ViolationType {
     id: number;
     label: string;
     amount: number;
+    adminId?: number;
 }
 
 export default function AdminViolationsPage() {

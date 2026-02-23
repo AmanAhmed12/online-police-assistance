@@ -33,6 +33,7 @@ interface Suspect {
     signs: string[];
     image: string;
     crime: string;
+    adminId?: number;
 }
 
 const SAMPLE_CRIMES = ["Theft", "Robbery", "Assault", "Fraud", "Vandalism", "Drugs", "Kidnapping", "Cybercrime", "Other"];

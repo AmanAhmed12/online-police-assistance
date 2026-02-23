@@ -11,6 +11,7 @@ export interface Suspect {
     signs: string[];
     image: string;
     crime: string;
+    adminId?: number;
 }
 
 export interface SuspectMatchRequest {

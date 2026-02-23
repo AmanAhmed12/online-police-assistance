@@ -8,6 +8,7 @@ export interface EmergencyContact {
     type: string;
     description?: string;
     priority?: number;
+    adminId?: number;
 }
 
 // --- Professional API Helper ---
