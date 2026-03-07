@@ -26,6 +26,7 @@ import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store';
 import { matchSuspects, SuspectMatchRequest, SuspectMatchResponse } from '@/app/services/suspectService';
+import { getMyComplaints, addSuspectsToComplaint, Complaint } from '@/app/services/complaintService';
 import ForensicSketch from '@/components/ForensicSketch';
 import { useRouter } from 'next/navigation';
 
@@ -68,6 +69,17 @@ export default function SuspectDetailsPage() {
     const router = useRouter();
 
     // Form State
+    const [complaints, setComplaints] = useState<Complaint[]>([]);
+    const [selectedComplaintId, setSelectedComplaintId] = useState<string>('');
+    const [isLinking, setIsLinking] = useState(false);
+    const [isLinked, setIsLinked] = useState(false);
+
+    React.useEffect(() => {
+        if (token) {
+            getMyComplaints(token).then(setComplaints).catch(console.error);
+        }
+    }, [token]);
+
     const [gender, setGender] = useState('');
     const [age, setAge] = useState<number | ''>('');
     const [location, setLocation] = useState('');
@@ -128,15 +140,17 @@ export default function SuspectDetailsPage() {
         }
     };
 
-    const handleFileReport = (suspect: SuspectMatchResponse) => {
-        // Pre-fill parameters in URL for the complaint page
-        const params = new URLSearchParams({
-            title: `Sighting/Incident: Suspect ID #SUS-${suspect.id}`,
-            category: suspect.crime || 'Theft',
-            description: `I am reporting an incident involving the individual identified as Suspect ID #SUS-${suspect.id}. \r\n\r\nLast Seen Location: ${suspect.lastSeenLocation}. \r\n\r\nSystem Observation: ${suspect.description}`,
-            location: suspect.lastSeenLocation
-        });
-        router.push(`/citizen/complaint/new?${params.toString()}`);
+    const handleLinkComplaint = async () => {
+        setIsLinking(true);
+        try {
+            await addSuspectsToComplaint(Number(selectedComplaintId), results.map(s => s.id), token);
+            setIsLinked(true);
+        } catch (error) {
+            console.error("Failed to link suspects", error);
+            alert("Failed to link suspects to complaint.");
+        } finally {
+            setIsLinking(false);
+        }
     };
 
     return (
@@ -197,6 +211,26 @@ export default function SuspectDetailsPage() {
                             </Box>
 
                             <Grid container spacing={4}>
+                                <Grid size={{ xs: 12 }}>
+                                    <FormControl fullWidth sx={{ ...textFieldSx }}>
+                                        <InputLabel sx={{ color: '#a0a4b7' }}>Associated Complaint</InputLabel>
+                                        <Select
+                                            value={selectedComplaintId}
+                                            label="Associated Complaint"
+                                            onChange={(e) => setSelectedComplaintId(e.target.value)}
+                                            required
+                                            sx={{ color: '#f5f7ff' }}
+                                        >
+                                            <MenuItem value="" disabled>Select a complaint</MenuItem>
+                                            {complaints.map(complaint => (
+                                                <MenuItem key={complaint.id} value={complaint.id.toString()}>
+                                                    #{complaint.id} - {complaint.title} ({new Date(complaint.incidentDate).toLocaleDateString()})
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+
                                 <Grid size={{ xs: 12, sm: 6 }}>
                                     <FormControl fullWidth sx={{ ...textFieldSx }}>
                                         <InputLabel sx={{ color: '#a0a4b7' }}>Biological Gender</InputLabel>
@@ -255,7 +289,7 @@ export default function SuspectDetailsPage() {
                                 </Grid>
 
                                 <Grid size={{ xs: 12 }} sx={{ mt: 3, textAlign: 'right' }}>
-                                    <Button variant="contained" size="large" onClick={handleNext} disabled={!gender || age === ''} sx={{ px: 6, borderRadius: 2, height: 50, bgcolor: '#2866f2' }}>
+                                    <Button variant="contained" size="large" onClick={handleNext} disabled={!selectedComplaintId || !gender || age === ''} sx={{ px: 6, borderRadius: 2, height: 50, bgcolor: '#2866f2' }}>
                                         Commence Verification
                                     </Button>
                                 </Grid>
@@ -326,101 +360,35 @@ export default function SuspectDetailsPage() {
                                 </Typography>
                             </Paper>
                         ) : (
-                            <Grid container spacing={6}>
-                                {results.map((suspect) => (
-                                    <Grid size={{ xs: 12 }} key={suspect.id}>
-                                        <Card
-                                            sx={{
-                                                display: 'flex', flexDirection: { xs: 'column', lg: 'row' },
-                                                borderRadius: 4, overflow: 'hidden', border: '1px solid rgba(40, 102, 242, 0.3)',
-                                                boxShadow: '0 20px 60px rgba(0,0,0,0.6)', position: 'relative',
-                                                bgcolor: '#131722', transition: 'all 0.3s ease',
-                                                '&:hover': { border: '1px solid #2866f2', transform: 'translateY(-5px)' }
-                                            }}
-                                        >
-                                            {/* Confidential Watermark */}
-                                            <Box sx={{
-                                                position: 'absolute', top: -40, right: 100, fontSize: '15rem',
-                                                fontWeight: '900', color: 'rgba(255,255,255,0.02)', transform: 'rotate(-15deg)', pointerEvents: 'none', zIndex: 0
-                                            }}>
-                                                CONFIDENTIAL
-                                            </Box>
-
-                                            {/* Dossier Image Section */}
-                                            <Box
-                                                sx={{ width: { xs: '100%', lg: 400 }, height: { xs: 400, lg: 550 }, position: 'relative' }}
+                            <Grid container justifyContent="center">
+                                <Grid size={{ xs: 12, md: 8 }}>
+                                    <Card sx={{ bgcolor: '#131722', border: '1px solid #2866f2', p: 5, textAlign: 'center', borderRadius: 4 }}>
+                                        <CheckCircleIcon sx={{ fontSize: 80, color: '#2866f2', mb: 2 }} />
+                                        <Typography variant="h4" color="#f5f7ff" fontWeight="bold" gutterBottom>
+                                            {results.length} Matching Suspect{results.length !== 1 ? 's' : ''} Identified
+                                        </Typography>
+                                        <Typography variant="body1" color="#a0a4b7" mb={4}>
+                                            The central registry has successfully found matching records based on your descriptors.
+                                            You can now link these suspects to your selected complaint (#{selectedComplaintId}).
+                                        </Typography>
+                                        {isLinked ? (
+                                            <Typography variant="h6" color="#00e5ff" fontWeight="bold">
+                                                Successfully linked suspects to Document #{selectedComplaintId}!
+                                            </Typography>
+                                        ) : (
+                                            <Button
+                                                variant="contained"
+                                                size="large"
+                                                startIcon={<FileIcon />}
+                                                onClick={handleLinkComplaint}
+                                                disabled={isLinking}
+                                                sx={{ height: 50, px: 6, borderRadius: 2, bgcolor: '#2866f2' }}
                                             >
-                                                <ForensicSketch imageUrl={suspect.image} />
-
-                                                <Box sx={{ position: 'absolute', top: 30, left: -5, bgcolor: '#000', color: 'white', px: 3, py: 1, transform: 'rotate(-5deg)', fontWeight: 800, boxShadow: 10, letterSpacing: 2, border: '2px solid white', zIndex: 5 }}>
-                                                    AI VERIFIED
-                                                </Box>
-
-                                                <Box sx={{ position: 'absolute', top: 30, right: 30, zIndex: 12 }}>
-                                                    <Chip icon={<AutoFixHighIcon style={{ color: '#fff' }} />} label="GEMINI AI POWERED" size="small" sx={{ bgcolor: 'rgba(40, 102, 242, 0.9)', color: '#fff', fontWeight: 900, backdropFilter: 'blur(4px)', border: '1px solid rgba(255,255,255,0.2)' }} />
-                                                </Box>
-
-                                                <Box sx={{ position: 'absolute', bottom: 30, right: 30, textAlign: 'right', zIndex: 12 }}>
-                                                    <Typography variant="overline" color="white" sx={{ opacity: 0.6, fontWeight: 700 }}>CONFIDENCE RATING</Typography>
-                                                    <Typography variant="h3" color="#00e5ff" fontWeight="900" sx={{ mt: -1, textShadow: '0 0 10px rgba(0,229,255,0.5)' }}>{Math.round(suspect.matchPercentage)}%</Typography>
-                                                </Box>
-                                            </Box>
-
-                                            {/* Dossier Data Section */}
-                                            <CardContent sx={{ flex: 1, p: 6, position: 'relative', zIndex: 1 }}>
-                                                <Box display="flex" justifyContent="space-between" mb={4} alignItems="flex-start">
-                                                    <Box>
-                                                        <Typography variant="overline" color="#2866f2" sx={{ fontWeight: 800, letterSpacing: 2 }}>DIGITAL CASE FILE #SUS-{suspect.id}</Typography>
-                                                        <Typography variant="h3" fontWeight="900" color="#f5f7ff">IDENTIFIED SUBJECT</Typography>
-                                                    </Box>
-                                                    <Chip icon={<SecurityIcon sx={{ color: 'white !important' }} />} label="VERIFIED MATCH" sx={{ borderRadius: 1, fontWeight: 900, px: 1, bgcolor: '#2866f2', color: 'white' }} />
-                                                </Box>
-
-                                                <Divider sx={{ mb: 4, opacity: 0.1, bgcolor: 'rgba(255,255,255,0.1)' }} />
-
-                                                <Grid container spacing={3}>
-                                                    <Grid size={{ xs: 12, sm: 4 }}>
-                                                        <Typography variant="caption" color="#a0a4b7" sx={{ fontWeight: 700 }}>NAME / ALIAS</Typography>
-                                                        <Typography variant="h6" fontWeight="bold" color="#f5f7ff">CONFIDENTIAL IDENTITY</Typography>
-                                                    </Grid>
-                                                    <Grid size={{ xs: 12, sm: 4 }}>
-                                                        <Typography variant="caption" color="#a0a4b7" sx={{ fontWeight: 700 }}>AGE GROUP</Typography>
-                                                        <Typography variant="h6" fontWeight="bold" color="#f5f7ff">~{suspect.age} YEARS</Typography>
-                                                    </Grid>
-                                                    <Grid size={{ xs: 12, sm: 4 }}>
-                                                        <Typography variant="caption" color="#a0a4b7" sx={{ fontWeight: 700 }}>BIOLOGICAL GENDER</Typography>
-                                                        <Typography variant="h6" fontWeight="bold" color="#f5f7ff">{suspect.gender.toUpperCase()}</Typography>
-                                                    </Grid>
-                                                    <Grid size={{ xs: 12 }}>
-                                                        <Typography variant="caption" color="#a0a4b7" sx={{ fontWeight: 700 }}>LAST REPORTED OPERATING AREA</Typography>
-                                                        <Typography variant="h6" fontWeight="bold" color="#ef5350">{suspect.lastSeenLocation.toUpperCase()}</Typography>
-                                                    </Grid>
-                                                </Grid>
-
-                                                <Box mt={6} sx={{ bgcolor: 'rgba(40,102,242,0.05)', p: 3, borderRadius: 2, borderLeft: '4px solid #2866f2' }}>
-                                                    <Typography variant="subtitle2" fontWeight="bold" color="#2866f2" gutterBottom>INVESTIGATIVE REMARKS</Typography>
-                                                    <Typography variant="body2" color="#a0a4b7" sx={{ fontStyle: 'italic', opacity: 0.9 }}>
-                                                        System automated profile match based on physical descriptors and verified investigative signs ({suspect.signs.join(', ')}).
-                                                        Subject is verified as a potential match for the described criminal activity.
-                                                    </Typography>
-                                                </Box>
-
-                                                <Box display="flex" gap={2} mt={6}>
-                                                    <Button
-                                                        variant="contained"
-                                                        fullWidth
-                                                        type="button"
-                                                        startIcon={<FileIcon />}
-                                                        onClick={(e) => { e.stopPropagation(); handleFileReport(suspect); }}
-                                                        sx={{ height: 50, borderRadius: 2, bgcolor: '#2866f2' }}
-                                                    >
-                                                        File Incident Report
-                                                    </Button>
-                                                </Box>
-                                            </CardContent>
-                                        </Card>
-                                    </Grid>
-                                ))}
+                                                {isLinking ? 'Linking...' : 'Link to Selected Complaint'}
+                                            </Button>
+                                        )}
+                                    </Card>
+                                </Grid>
                             </Grid>
                         )}
                     </Grid>

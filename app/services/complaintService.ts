@@ -13,6 +13,7 @@ export interface Complaint {
     assignedOfficerId?: number;
     assignedOfficerName?: string;
     evidenceFiles?: string[];
+    suspectIds?: number[];
     createdAt: string;
     updatedAt?: string;
     updatedById?: number;
@@ -87,6 +88,22 @@ export const updateComplaintStatus = async (id: number, status: string, token?: 
 
     if (!response.ok) {
         throw new Error("Failed to update status");
+    }
+    return await response.json();
+};
+
+export const addSuspectsToComplaint = async (id: number, suspectIds: number[], token?: string) => {
+    const response = await fetch(`${API_BASE_URL}/api/complaints/${id}/suspects`, {
+        method: "PATCH",
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(suspectIds)
+    });
+
+    if (!response.ok) {
+        throw new Error("Failed to add suspects");
     }
     return await response.json();
 };

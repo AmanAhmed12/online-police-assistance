@@ -38,6 +38,16 @@ export const suspectService = {
         return await response.json();
     },
 
+    getSuspectById: async (id: number, token?: string): Promise<Suspect> => {
+        const response = await fetch(`${API_BASE_URL}/api/suspects/${id}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        if (!response.ok) throw new Error("Failed to fetch suspect details");
+        return await response.json();
+    },
+
     createSuspect: async (data: any, token?: string): Promise<Suspect> => {
         const response = await fetch(`${API_BASE_URL}/api/suspects`, {
             method: "POST",
