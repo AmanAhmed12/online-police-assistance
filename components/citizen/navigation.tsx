@@ -19,7 +19,8 @@ export const citizenNavigation = [
     { name: "Emergency Line", href: "/citizen/emergency", icon: <EmergencyIcon /> },
     { name: "Chat AI For LAW", href: "/citizen/chat", icon: <SmartToyIcon /> },
     { name: "Suspect Details", href: "/citizen/suspect-details", icon: <ProfileIcon /> },
+    { name: "My Fines", href: "/citizen/fines", icon: <PaymentIcon /> },
     { name: "Guidelines", href: "/citizen/guidelines", icon: <InfoIcon /> },
     { name: "Notices", href: "/citizen/notices", icon: <CampaignIcon /> },
-    { name: "My Fines", href: "/citizen/fines", icon: <PaymentIcon /> },
+
 ];

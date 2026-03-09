@@ -24,7 +24,8 @@ import {
     DialogTitle,
     DialogContent,
     DialogActions,
-    Snackbar
+    Snackbar,
+    TablePagination
 } from "@mui/material";
 import {
     Payment as PaymentIcon,
@@ -51,6 +52,26 @@ export default function MyFinesPage() {
         message: "",
         severity: "success" as "success" | "error"
     });
+
+    // Pagination State
+    const [pendingPage, setPendingPage] = useState(0);
+    const [historyPage, setHistoryPage] = useState(0);
+    const rowsPerPage = 10;
+
+    const pendingFines = fines.filter(f => f.status === "PENDING");
+    const paidFines = fines.filter(f => f.status === "PAID");
+
+    // Reset pagination if page is out of bounds (e.g. after payment)
+    useEffect(() => {
+        const maxPendingPage = Math.max(0, Math.ceil(pendingFines.length / rowsPerPage) - 1);
+        if (pendingPage > maxPendingPage) {
+            setPendingPage(0);
+        }
+        const maxHistoryPage = Math.max(0, Math.ceil(paidFines.length / rowsPerPage) - 1);
+        if (historyPage > maxHistoryPage) {
+            setHistoryPage(0);
+        }
+    }, [pendingFines.length, paidFines.length, pendingPage, historyPage]);
 
     const token = useSelector((state: RootState) => state.auth.user?.token);
     const user = useSelector((state: RootState) => state.auth.user);
@@ -126,7 +147,7 @@ export default function MyFinesPage() {
                 merchant_id: process.env.NEXT_PUBLIC_PAYHERE_MERCHANT_ID,
                 return_url: window.location.origin + "/citizen/fines",
                 cancel_url: window.location.origin + "/citizen/fines",
-                notify_url: "http://localhost:8080/api/fines/payhere-notify",
+                notify_url: `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080'}/api/fines/payhere-notify`,
                 order_id: fine.id.toString(),
                 items: "Traffic Fine: " + fine.violationType,
                 amount: fine.amount.toFixed(2),
@@ -153,21 +174,24 @@ export default function MyFinesPage() {
     const verifyPayment = async (fineId: number, paymentId: string) => {
         if (isNaN(fineId)) return;
         try {
-            await verifyFinePayment(fineId, paymentId, token);
+            console.log("Verifying payment for Fine ID:", fineId, "with Payment ID:", paymentId);
+            const result = await verifyFinePayment(fineId, paymentId, token);
+            console.log("Verification success:", result);
             setSnackbar({ open: true, message: "Payment successful! Your fine has been marked as PAID.", severity: "success" });
             fetchFines(); // Refresh list
             setIsProcessing(false);
-        } catch (error) {
-            console.error("Payment error", error);
-            setSnackbar({ open: true, message: "Verification failed. Please contact support if the amount was deducted.", severity: "error" });
+        } catch (error: any) {
+            console.error("Payment verification error", error);
+            // Enhanced logging to capture redirect or other issues
+            if (error instanceof Error) {
+                console.error("Error Message:", error.message);
+            }
+            setSnackbar({ open: true, message: "Verification failed. Check the console for details.", severity: "error" });
             setIsProcessing(false);
         }
     };
 
     if (loading) return <Box display="flex" justifyContent="center" p={5}><CircularProgress /></Box>;
-
-    const pendingFines = fines.filter(f => f.status === "PENDING");
-    const paidFines = fines.filter(f => f.status === "PAID");
 
     return (
         <Box sx={{ p: 3, position: 'relative' }}>
@@ -260,44 +284,60 @@ export default function MyFinesPage() {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {pendingFines.map((fine) => (
-                                <TableRow key={fine.id} hover sx={{ '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.02) !important' } }}>
-                                    <TableCell sx={{ color: 'var(--fg-main)', borderBottom: '1px solid var(--border-light)', py: 2.5 }}>#{fine.id}</TableCell>
-                                    <TableCell sx={{ borderBottom: '1px solid var(--border-light)', py: 2.5 }}>
-                                        <Chip
-                                            label={fine.violationType}
-                                            sx={{
-                                                bgcolor: 'rgba(59, 130, 246, 0.1)',
-                                                color: '#60A5FA',
-                                                border: '1px solid rgba(59, 130, 246, 0.2)',
-                                                fontWeight: 600
-                                            }}
-                                        />
-                                    </TableCell>
-                                    <TableCell sx={{ color: 'var(--fg-main)', borderBottom: '1px solid var(--border-light)', py: 2.5 }}>{fine.vehicleNumber}</TableCell>
-                                    <TableCell sx={{ color: 'var(--fg-secondary)', borderBottom: '1px solid var(--border-light)', py: 2.5 }}>{new Date(fine.issuedAt).toLocaleDateString()}</TableCell>
-                                    <TableCell sx={{ fontWeight: '800', color: '#EF4444', fontSize: '1.1rem', borderBottom: '1px solid var(--border-light)', py: 2.5 }}>LKR {fine.amount}</TableCell>
-                                    <TableCell align="center" sx={{ borderBottom: '1px solid var(--border-light)', py: 2.5 }}>
-                                        <Button
-                                            variant="contained"
-                                            startIcon={<PaymentIcon />}
-                                            onClick={() => handlePayClick(fine)}
-                                            sx={{
-                                                bgcolor: 'var(--primary)',
-                                                borderRadius: '12px',
-                                                textTransform: 'none',
-                                                fontWeight: 700,
-                                                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
-                                                '&:hover': { bgcolor: 'var(--primary-bright)' }
-                                            }}
-                                        >
-                                            Pay Now
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
+                            {pendingFines
+                                .slice(pendingPage * rowsPerPage, pendingPage * rowsPerPage + rowsPerPage)
+                                .map((fine) => (
+                                    <TableRow key={fine.id} hover sx={{ '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.02) !important' } }}>
+                                        <TableCell sx={{ color: 'var(--fg-main)', borderBottom: '1px solid var(--border-light)', py: 2.5 }}>#{fine.id}</TableCell>
+                                        <TableCell sx={{ borderBottom: '1px solid var(--border-light)', py: 2.5 }}>
+                                            <Chip
+                                                label={fine.violationType}
+                                                sx={{
+                                                    bgcolor: 'rgba(59, 130, 246, 0.1)',
+                                                    color: '#60A5FA',
+                                                    border: '1px solid rgba(59, 130, 246, 0.2)',
+                                                    fontWeight: 600
+                                                }}
+                                            />
+                                        </TableCell>
+                                        <TableCell sx={{ color: 'var(--fg-main)', borderBottom: '1px solid var(--border-light)', py: 2.5 }}>{fine.vehicleNumber}</TableCell>
+                                        <TableCell sx={{ color: 'var(--fg-secondary)', borderBottom: '1px solid var(--border-light)', py: 2.5 }}>{new Date(fine.issuedAt).toLocaleDateString()}</TableCell>
+                                        <TableCell sx={{ fontWeight: '800', color: '#EF4444', fontSize: '1.1rem', borderBottom: '1px solid var(--border-light)', py: 2.5 }}>LKR {fine.amount}</TableCell>
+                                        <TableCell align="center" sx={{ borderBottom: '1px solid var(--border-light)', py: 2.5 }}>
+                                            <Button
+                                                variant="contained"
+                                                startIcon={<PaymentIcon />}
+                                                onClick={() => handlePayClick(fine)}
+                                                sx={{
+                                                    bgcolor: 'var(--primary)',
+                                                    borderRadius: '12px',
+                                                    textTransform: 'none',
+                                                    fontWeight: 700,
+                                                    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
+                                                    '&:hover': { bgcolor: 'var(--primary-bright)' }
+                                                }}
+                                            >
+                                                Pay Now
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
                         </TableBody>
                     </Table>
+                    <TablePagination
+                        rowsPerPageOptions={[10]}
+                        component="div"
+                        count={pendingFines.length}
+                        rowsPerPage={rowsPerPage}
+                        page={pendingPage}
+                        onPageChange={(_, newPage) => setPendingPage(newPage)}
+                        sx={{
+                            color: 'var(--fg-secondary)',
+                            borderTop: '1px solid var(--border-light)',
+                            '.MuiTablePagination-selectIcon': { color: 'var(--fg-secondary)' },
+                            '.MuiIconButton-root': { color: 'var(--fg-secondary)' }
+                        }}
+                    />
                 </TableContainer>
             )}
 
@@ -324,31 +364,33 @@ export default function MyFinesPage() {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {paidFines.map((fine) => (
-                            <TableRow key={fine.id} hover sx={{ '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.02) !important' } }}>
-                                <TableCell sx={{ color: 'var(--fg-main)', borderBottom: '1px solid var(--border-light)', py: 2.5 }}>#{fine.id}</TableCell>
-                                <TableCell sx={{ borderBottom: '1px solid var(--border-light)', py: 2.5 }}>
-                                    <Typography variant="body2" sx={{ color: 'var(--fg-main)', fontWeight: 500 }}>{fine.violationType}</Typography>
-                                </TableCell>
-                                <TableCell sx={{ color: 'var(--fg-secondary)', borderBottom: '1px solid var(--border-light)', py: 2.5 }}>{fine.paidAt ? new Date(fine.paidAt).toLocaleDateString() : '-'}</TableCell>
-                                <TableCell sx={{ color: 'var(--fg-secondary)', fontFamily: 'monospace', borderBottom: '1px solid var(--border-light)', py: 2.5 }}>{fine.paymentGatewayId}</TableCell>
-                                <TableCell sx={{ color: 'var(--fg-main)', fontWeight: 600, borderBottom: '1px solid var(--border-light)', py: 2.5 }}>LKR {fine.amount}</TableCell>
-                                <TableCell sx={{ borderBottom: '1px solid var(--border-light)', py: 2.5 }}>
-                                    <Chip
-                                        icon={<PaidIcon sx={{ fontSize: '1rem !important' }} />}
-                                        label="PAID"
-                                        size="small"
-                                        variant="outlined"
-                                        sx={{
-                                            borderColor: '#10B981',
-                                            color: '#10B981',
-                                            fontWeight: 700,
-                                            '& .MuiChip-icon': { color: '#10B981' }
-                                        }}
-                                    />
-                                </TableCell>
-                            </TableRow>
-                        ))}
+                        {paidFines
+                            .slice(historyPage * rowsPerPage, historyPage * rowsPerPage + rowsPerPage)
+                            .map((fine) => (
+                                <TableRow key={fine.id} hover sx={{ '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.02) !important' } }}>
+                                    <TableCell sx={{ color: 'var(--fg-main)', borderBottom: '1px solid var(--border-light)', py: 2.5 }}>#{fine.id}</TableCell>
+                                    <TableCell sx={{ borderBottom: '1px solid var(--border-light)', py: 2.5 }}>
+                                        <Typography variant="body2" sx={{ color: 'var(--fg-main)', fontWeight: 500 }}>{fine.violationType}</Typography>
+                                    </TableCell>
+                                    <TableCell sx={{ color: 'var(--fg-secondary)', borderBottom: '1px solid var(--border-light)', py: 2.5 }}>{fine.paidAt ? new Date(fine.paidAt).toLocaleDateString() : '-'}</TableCell>
+                                    <TableCell sx={{ color: 'var(--fg-secondary)', fontFamily: 'monospace', borderBottom: '1px solid var(--border-light)', py: 2.5 }}>{fine.paymentGatewayId}</TableCell>
+                                    <TableCell sx={{ color: 'var(--fg-main)', fontWeight: 600, borderBottom: '1px solid var(--border-light)', py: 2.5 }}>LKR {fine.amount}</TableCell>
+                                    <TableCell sx={{ borderBottom: '1px solid var(--border-light)', py: 2.5 }}>
+                                        <Chip
+                                            icon={<PaidIcon sx={{ fontSize: '1rem !important' }} />}
+                                            label="PAID"
+                                            size="small"
+                                            variant="outlined"
+                                            sx={{
+                                                borderColor: '#10B981',
+                                                color: '#10B981',
+                                                fontWeight: 700,
+                                                '& .MuiChip-icon': { color: '#10B981' }
+                                            }}
+                                        />
+                                    </TableCell>
+                                </TableRow>
+                            ))}
                         {paidFines.length === 0 && (
                             <TableRow>
                                 <TableCell colSpan={6} align="center" sx={{ color: 'var(--fg-secondary)', py: 5, borderBottom: 'none' }}>
@@ -358,6 +400,20 @@ export default function MyFinesPage() {
                         )}
                     </TableBody>
                 </Table>
+                <TablePagination
+                    rowsPerPageOptions={[10]}
+                    component="div"
+                    count={paidFines.length}
+                    rowsPerPage={rowsPerPage}
+                    page={historyPage}
+                    onPageChange={(_, newPage) => setHistoryPage(newPage)}
+                    sx={{
+                        color: 'var(--fg-secondary)',
+                        borderTop: '1px solid var(--border-light)',
+                        '.MuiTablePagination-selectIcon': { color: 'var(--fg-secondary)' },
+                        '.MuiIconButton-root': { color: 'var(--fg-secondary)' }
+                    }}
+                />
             </TableContainer>
 
             {/* PayHere SDK Script */}

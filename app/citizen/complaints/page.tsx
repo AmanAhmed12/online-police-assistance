@@ -11,13 +11,14 @@ import {
     Chip,
     CircularProgress,
     Divider,
-    Container,
-    Button,
     Dialog,
     DialogTitle,
     DialogContent,
     DialogActions,
-    Grid
+    Grid,
+    TablePagination,
+    Container,
+    Button
 } from '@mui/material';
 import ArticleIcon from '@mui/icons-material/Article';
 import { useSelector } from 'react-redux';
@@ -25,6 +26,12 @@ import { RootState } from '@/lib/store';
 import { getMyComplaints, Complaint } from '@/app/services/complaintService';
 import AddIcon from '@mui/icons-material/Add';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+
+const LocationDisplay = dynamic(() => import('@/components/LocationDisplay'), {
+    ssr: false,
+    loading: () => <Box sx={{ height: 200, bgcolor: 'action.hover', borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading Forensic Map...</Box>
+});
 
 export default function MyComplaintsPage() {
     const user = useSelector((state: RootState) => state.auth.user);
@@ -34,6 +41,14 @@ export default function MyComplaintsPage() {
     const [complaints, setComplaints] = useState<Complaint[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
+
+    // Pagination State
+    const [page, setPage] = useState(0);
+    const rowsPerPage = 10;
+
+    const handleChangePage = (event: unknown, newPage: number) => {
+        setPage(newPage);
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -98,73 +113,85 @@ export default function MyComplaintsPage() {
                             </Button>
                         </Box>
                     ) : (
-                        <List>
-                            {complaints.map((item, index) => (
-                                <React.Fragment key={item.id}>
-                                    <ListItem alignItems="flex-start" sx={{ p: 3, '&:hover': { bgcolor: 'action.hover' } }}>
-                                        <ListItemText
-                                            primary={
-                                                <Box display="flex" justifyContent="space-between" alignItems="flex-start" flexWrap="wrap" gap={1}>
-                                                    <Box>
-                                                        <Typography variant="h6" fontWeight="bold" color="primary.main" sx={{ cursor: 'pointer' }} onClick={() => setSelectedComplaint(item)}>
-                                                            {item.title}
-                                                        </Typography>
-                                                        <Typography variant="caption" color="text.secondary" display="block" mt={0.5}>
-                                                            Reference ID: #{item.id}
-                                                        </Typography>
-                                                    </Box>
-                                                    <Chip
-                                                        label={item.status}
-                                                        color={getStatusColor(item.status)}
-                                                        size="small"
-                                                        sx={{ fontWeight: 'bold' }}
-                                                    />
-                                                </Box>
-                                            }
-                                            secondaryTypographyProps={{ component: 'div' }}
-                                            secondary={
-                                                <Box mt={1}>
-                                                    <Typography variant="body1" color="text.primary" gutterBottom sx={{
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        display: '-webkit-box',
-                                                        WebkitLineClamp: 2,
-                                                        WebkitBoxOrient: 'vertical',
-                                                        cursor: 'pointer'
-                                                    }} onClick={() => setSelectedComplaint(item)}>
-                                                        {item.description}
-                                                    </Typography>
-
-                                                    <Box display="flex" gap={3} mt={1} flexWrap="wrap">
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            <strong>Category:</strong> {item.category}
-                                                        </Typography>
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            <strong>Location:</strong> {item.location}
-                                                        </Typography>
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            <strong>Incident Date:</strong> {new Date(item.incidentDate).toLocaleDateString()}
-                                                        </Typography>
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            <strong>Submitted:</strong> {new Date(item.createdAt).toLocaleDateString()}
-                                                        </Typography>
-                                                    </Box>
-
-                                                    {item.assignedOfficerName && (
-                                                        <Box mt={1} p={1} bgcolor="background.default" borderRadius={1} display="inline-block">
-                                                            <Typography variant="caption" fontWeight="bold">
-                                                                Assigned Officer: {item.assignedOfficerName}
-                                                            </Typography>
+                        <>
+                            <List>
+                                {complaints
+                                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                    .map((item, index) => (
+                                        <React.Fragment key={item.id}>
+                                            <ListItem alignItems="flex-start" sx={{ p: 3, '&:hover': { bgcolor: 'action.hover' } }}>
+                                                <ListItemText
+                                                    primary={
+                                                        <Box display="flex" justifyContent="space-between" alignItems="flex-start" flexWrap="wrap" gap={1}>
+                                                            <Box>
+                                                                <Typography variant="h6" fontWeight="bold" color="primary.main" sx={{ cursor: 'pointer' }} onClick={() => setSelectedComplaint(item)}>
+                                                                    {item.title}
+                                                                </Typography>
+                                                                <Typography variant="caption" color="text.secondary" display="block" mt={0.5}>
+                                                                    Reference ID: #{item.id}
+                                                                </Typography>
+                                                            </Box>
+                                                            <Chip
+                                                                label={item.status}
+                                                                color={getStatusColor(item.status)}
+                                                                size="small"
+                                                                sx={{ fontWeight: 'bold' }}
+                                                            />
                                                         </Box>
-                                                    )}
-                                                </Box>
-                                            }
-                                        />
-                                    </ListItem>
-                                    {index < complaints.length - 1 && <Divider component="li" />}
-                                </React.Fragment>
-                            ))}
-                        </List>
+                                                    }
+                                                    secondaryTypographyProps={{ component: 'div' }}
+                                                    secondary={
+                                                        <Box mt={1}>
+                                                            <Typography variant="body1" color="text.primary" gutterBottom sx={{
+                                                                overflow: 'hidden',
+                                                                textOverflow: 'ellipsis',
+                                                                display: '-webkit-box',
+                                                                WebkitLineClamp: 2,
+                                                                WebkitBoxOrient: 'vertical',
+                                                                cursor: 'pointer'
+                                                            }} onClick={() => setSelectedComplaint(item)}>
+                                                                {item.description}
+                                                            </Typography>
+
+                                                            <Box display="flex" gap={3} mt={1} flexWrap="wrap">
+                                                                <Typography variant="body2" color="text.secondary">
+                                                                    <strong>Category:</strong> {item.category}
+                                                                </Typography>
+                                                                <Typography variant="body2" color="text.secondary">
+                                                                    <strong>Location:</strong> {item.location}
+                                                                </Typography>
+                                                                <Typography variant="body2" color="text.secondary">
+                                                                    <strong>Incident Date:</strong> {new Date(item.incidentDate).toLocaleDateString()}
+                                                                </Typography>
+                                                                <Typography variant="body2" color="text.secondary">
+                                                                    <strong>Submitted:</strong> {new Date(item.createdAt).toLocaleDateString()}
+                                                                </Typography>
+                                                            </Box>
+
+                                                            {item.assignedOfficerName && (
+                                                                <Box mt={1} p={1} bgcolor="background.default" borderRadius={1} display="inline-block">
+                                                                    <Typography variant="caption" fontWeight="bold">
+                                                                        Assigned Officer: {item.assignedOfficerName}
+                                                                    </Typography>
+                                                                </Box>
+                                                            )}
+                                                        </Box>
+                                                    }
+                                                />
+                                            </ListItem>
+                                            {index < (complaints.slice(page * rowsPerPage, (page + 1) * rowsPerPage).length - 1) && <Divider component="li" />}
+                                        </React.Fragment>
+                                    ))}
+                            </List>
+                            <TablePagination
+                                rowsPerPageOptions={[10]}
+                                component="div"
+                                count={complaints.length}
+                                rowsPerPage={rowsPerPage}
+                                page={page}
+                                onPageChange={handleChangePage}
+                            />
+                        </>
                     )}
                 </Paper>
             </Box>
@@ -202,6 +229,18 @@ export default function MyComplaintsPage() {
                                     {selectedComplaint.description}
                                 </Typography>
                             </Box>
+
+                            {selectedComplaint.latitude && selectedComplaint.longitude && (
+                                <Box mb={4}>
+                                    <Typography variant="overline" color="text.secondary">Incident Geolocation</Typography>
+                                    <LocationDisplay
+                                        lat={selectedComplaint.latitude}
+                                        lng={selectedComplaint.longitude}
+                                        address={selectedComplaint.location}
+                                        height={250}
+                                    />
+                                </Box>
+                            )}
 
                             <Grid container spacing={3} sx={{ bgcolor: 'action.hover', p: 2, borderRadius: 2 }}>
                                 <Grid size={{ xs: 12, sm: 6 }}>

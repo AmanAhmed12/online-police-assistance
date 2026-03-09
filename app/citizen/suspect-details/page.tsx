@@ -29,6 +29,12 @@ import { matchSuspects, SuspectMatchRequest, SuspectMatchResponse } from '@/app/
 import { getMyComplaints, addSuspectsToComplaint, Complaint } from '@/app/services/complaintService';
 import ForensicSketch from '@/components/ForensicSketch';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+
+const LocationPicker = dynamic(() => import('@/components/LocationPicker'), {
+    ssr: false,
+    loading: () => <Box sx={{ height: 300, bgcolor: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a0a4b7' }}>Initializing Forensic Map...</Box>
+});
 
 // AI Sketch labels and branding are handled within the ForensicSketch component and Dossier layout.
 
@@ -83,6 +89,8 @@ export default function SuspectDetailsPage() {
     const [gender, setGender] = useState('');
     const [age, setAge] = useState<number | ''>('');
     const [location, setLocation] = useState('');
+    const [lat, setLat] = useState<number | undefined>(undefined);
+    const [lng, setLng] = useState<number | undefined>(undefined);
     const [crime, setCrime] = useState('Theft');
     const [description, setDescription] = useState('');
     const [signs, setSigns] = useState<string[]>([]);
@@ -123,6 +131,8 @@ export default function SuspectDetailsPage() {
                 gender,
                 age: age === '' ? 0 : Number(age),
                 lastSeenLocation: location,
+                latitude: lat,
+                longitude: lng,
                 crime,
                 description,
                 signs: combinedSigns
@@ -267,8 +277,24 @@ export default function SuspectDetailsPage() {
                                     </FormControl>
                                 </Grid>
 
-                                <Grid size={{ xs: 12, sm: 12 }}>
-                                    <TextField fullWidth label="Last Identified Location" placeholder="Area, street name, or landmark" value={location} onChange={(e) => setLocation(e.target.value)} sx={{ ...textFieldSx }} />
+                                <Grid size={{ xs: 12 }}>
+                                    <Box sx={{
+                                        "& .leaflet-container": { borderRadius: 2, border: '1px solid rgba(255,255,255,0.1)' },
+                                        "& .MuiTextField-root": textFieldSx
+                                    }}>
+                                        <LocationPicker
+                                            label="Last Identified Location"
+                                            placeholder="Drag pin to exact incident spot"
+                                            value={location}
+                                            onChange={(addr, lt, lg) => {
+                                                setLocation(addr);
+                                                setLat(lt);
+                                                setLng(lg);
+                                            }}
+                                            initialLat={lat}
+                                            initialLng={lng}
+                                        />
+                                    </Box>
                                 </Grid>
 
                                 <Grid size={{ xs: 12 }}>

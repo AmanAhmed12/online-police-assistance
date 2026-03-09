@@ -7,6 +7,8 @@ export interface Suspect {
     age: number | "";
     gender: string;
     lastSeenLocation: string;
+    latitude?: number;
+    longitude?: number;
     description: string;
     signs: string[];
     image: string;
@@ -18,6 +20,8 @@ export interface SuspectMatchRequest {
     gender: string;
     age: number;
     lastSeenLocation: string;
+    latitude?: number;
+    longitude?: number;
     description: string;
     signs: string[];
     crime: string;

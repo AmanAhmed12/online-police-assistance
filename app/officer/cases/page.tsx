@@ -23,7 +23,8 @@ import {
     Select,
     MenuItem,
     CircularProgress,
-    IconButton
+    IconButton,
+    TablePagination
 } from '@mui/material';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -36,6 +37,12 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store';
 import { getMyAssignedComplaints, updateComplaintStatus, Complaint } from '@/app/services/complaintService';
 import { suspectService, Suspect } from '@/app/services/suspectService';
+import dynamic from 'next/dynamic';
+
+const LocationDisplay = dynamic(() => import('@/components/LocationDisplay'), {
+    ssr: false,
+    loading: () => <Box sx={{ height: 200, bgcolor: 'action.hover', borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading Forensic Map...</Box>
+});
 
 export default function OfficerCasesPage() {
     const token = useSelector((state: RootState) => state.auth.user?.token);
@@ -47,6 +54,14 @@ export default function OfficerCasesPage() {
 
     // Status update state (for the dialog)
     const [newStatus, setNewStatus] = useState('');
+
+    // Pagination State
+    const [page, setPage] = useState(0);
+    const rowsPerPage = 10;
+
+    const handleChangePage = (event: unknown, newPage: number) => {
+        setPage(newPage);
+    };
 
     const fetchCases = async () => {
         try {
@@ -262,55 +277,67 @@ export default function OfficerCasesPage() {
                         <Typography color="text.secondary">No assigned cases found.</Typography>
                     </Box>
                 ) : (
-                    <List>
-                        {cases.map((caseItem, index) => (
-                            <React.Fragment key={caseItem.id}>
-                                <ListItem
-                                    alignItems="flex-start"
-                                    secondaryAction={
-                                        <Button
-                                            variant="outlined"
-                                            startIcon={<VisibilityIcon />}
-                                            onClick={() => handleOpenDialog(caseItem)}
+                    <>
+                        <List>
+                            {cases
+                                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                .map((caseItem, index) => (
+                                    <React.Fragment key={caseItem.id}>
+                                        <ListItem
+                                            alignItems="flex-start"
+                                            secondaryAction={
+                                                <Button
+                                                    variant="outlined"
+                                                    startIcon={<VisibilityIcon />}
+                                                    onClick={() => handleOpenDialog(caseItem)}
+                                                >
+                                                    View
+                                                </Button>
+                                            }
                                         >
-                                            View
-                                        </Button>
-                                    }
-                                >
-                                    <ListItemAvatar>
-                                        <Avatar sx={{ bgcolor: 'primary.light' }}>
-                                            <AssignmentIcon />
-                                        </Avatar>
-                                    </ListItemAvatar>
-                                    <ListItemText
-                                        primary={
-                                            <Box display="flex" alignItems="center" gap={1} mb={0.5}>
-                                                <Typography variant="subtitle1" fontWeight={600}>
-                                                    {caseItem.title}
-                                                </Typography>
-                                                <Chip
-                                                    label={caseItem.status}
-                                                    size="small"
-                                                    color={getStatusColor(caseItem.status)}
-                                                />
-                                            </Box>
-                                        }
-                                        secondary={
-                                            <React.Fragment>
-                                                <Typography variant="body2" component="span" color="text.secondary" display="block">
-                                                    Category: {caseItem.category}
-                                                </Typography>
-                                                <Typography variant="body2" component="span" color="text.secondary">
-                                                    Date: {new Date(caseItem.incidentDate).toLocaleDateString()}
-                                                </Typography>
-                                            </React.Fragment>
-                                        }
-                                    />
-                                </ListItem>
-                                {index < cases.length - 1 && <Divider variant="inset" component="li" />}
-                            </React.Fragment>
-                        ))}
-                    </List>
+                                            <ListItemAvatar>
+                                                <Avatar sx={{ bgcolor: 'primary.light' }}>
+                                                    <AssignmentIcon />
+                                                </Avatar>
+                                            </ListItemAvatar>
+                                            <ListItemText
+                                                primary={
+                                                    <Box display="flex" alignItems="center" gap={1} mb={0.5}>
+                                                        <Typography variant="subtitle1" fontWeight={600}>
+                                                            {caseItem.title}
+                                                        </Typography>
+                                                        <Chip
+                                                            label={caseItem.status}
+                                                            size="small"
+                                                            color={getStatusColor(caseItem.status)}
+                                                        />
+                                                    </Box>
+                                                }
+                                                secondary={
+                                                    <React.Fragment>
+                                                        <Typography variant="body2" component="span" color="text.secondary" display="block">
+                                                            Category: {caseItem.category}
+                                                        </Typography>
+                                                        <Typography variant="body2" component="span" color="text.secondary">
+                                                            Date: {new Date(caseItem.incidentDate).toLocaleDateString()}
+                                                        </Typography>
+                                                    </React.Fragment>
+                                                }
+                                            />
+                                        </ListItem>
+                                        {index < (cases.slice(page * rowsPerPage, (page + 1) * rowsPerPage).length - 1) && <Divider variant="inset" component="li" />}
+                                    </React.Fragment>
+                                ))}
+                        </List>
+                        <TablePagination
+                            rowsPerPageOptions={[10]}
+                            component="div"
+                            count={cases.length}
+                            rowsPerPage={rowsPerPage}
+                            page={page}
+                            onPageChange={handleChangePage}
+                        />
+                    </>
                 )}
             </Paper>
 
@@ -350,9 +377,23 @@ export default function OfficerCasesPage() {
                                 </Grid>
                                 <Grid size={{ xs: 12 }}>
                                     <Typography variant="subtitle2" color="text.secondary">Description</Typography>
-                                    <Paper variant="outlined" sx={{ p: 2, bgcolor: 'background.default' }}>
+                                    <Paper variant="outlined" sx={{ p: 2, bgcolor: 'background.default', mb: 2 }}>
                                         <Typography variant="body2">{selectedCase.description}</Typography>
                                     </Paper>
+
+                                    {selectedCase.latitude && selectedCase.longitude && (
+                                        <Box sx={{ mt: 2 }}>
+                                            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                                Precise Incident Geolocation
+                                            </Typography>
+                                            <LocationDisplay
+                                                lat={selectedCase.latitude}
+                                                lng={selectedCase.longitude}
+                                                address={selectedCase.location}
+                                                height={200}
+                                            />
+                                        </Box>
+                                    )}
                                 </Grid>
 
                                 {selectedCase.evidenceFiles && selectedCase.evidenceFiles.length > 0 && (

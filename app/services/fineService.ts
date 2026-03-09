@@ -6,6 +6,8 @@ export interface Fine {
     vehicleNumber: string;
     amount: number;
     location: string;
+    latitude?: number;
+    longitude?: number;
     status: "PENDING" | "PAID";
     issuedAt: string;
     officer: {

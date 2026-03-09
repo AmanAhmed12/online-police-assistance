@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Typography, Box, Grid, Card, CardContent, Chip, CircularProgress } from '@mui/material';
+import { Typography, Box, Grid, Card, CardContent, Chip, CircularProgress, TablePagination } from '@mui/material';
 import WarningIcon from '@mui/icons-material/Warning';
 import { getAllComplaints, deleteComplaint, updateComplaintStatus, Complaint } from '@/app/services/complaintService';
 import { useSelector } from 'react-redux';
@@ -19,6 +19,14 @@ export default function ComplaintsPage() {
     const [statusDialogOpen, setStatusDialogOpen] = useState(false);
     const [selectedCase, setSelectedCase] = useState<Complaint | null>(null);
     const [statusToUpdate, setStatusToUpdate] = useState<string>('');
+
+    // Pagination State
+    const [page, setPage] = useState(0);
+    const rowsPerPage = 10;
+
+    const handleChangePage = (event: unknown, newPage: number) => {
+        setPage(newPage);
+    };
 
     const fetchComplaints = async () => {
         if (token) {
@@ -104,79 +112,94 @@ export default function ComplaintsPage() {
             {loading ? (
                 <Box display="flex" justifyContent="center" p={4}><CircularProgress /></Box>
             ) : (
-                <Grid container spacing={3}>
-                    {complaints.length === 0 ? (
-                        <Grid size={{ xs: 12 }}>
-                            <Box p={3} textAlign="center">
-                                <Typography color="text.secondary">No complaints found.</Typography>
-                            </Box>
-                        </Grid>
-                    ) : (
-                        complaints.map((complaint) => (
-                            <Grid size={{ xs: 12, md: 6, lg: 4 }} key={complaint.id}>
-                                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                                    <CardContent sx={{ flexGrow: 1 }}>
-                                        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                                            <Typography variant="h6" fontWeight="bold">
-                                                #{complaint.id}
-                                            </Typography>
-                                            <Chip
-                                                label={complaint.status}
-                                                color={getStatusColor(complaint.status)}
-                                                size="small"
-                                            />
-                                        </Box>
-                                        <Typography variant="subtitle1" gutterBottom fontWeight="bold">
-                                            {complaint.title}
-                                        </Typography>
-                                        <Typography variant="body2" color="textSecondary" gutterBottom>
-                                            Category: {complaint.category}
-                                        </Typography>
-                                        <Typography variant="body2" color="textSecondary">
-                                            Location: {complaint.location}
-                                        </Typography>
-                                        <Typography variant="body2" color="textSecondary">
-                                            Incident Date: {new Date(complaint.incidentDate).toLocaleDateString()}
-                                        </Typography>
-                                        <Typography variant="body2" color="textSecondary">
-                                            Submitted By: {complaint.citizenName || "Unknown"}
-                                        </Typography>
-
-                                        <Box mt={2} pt={1} borderTop={1} borderColor="divider">
-                                            <Typography variant="caption" display="block" color="text.secondary">
-                                                Created: {new Date(complaint.createdAt).toLocaleString()}
-                                            </Typography>
-                                            {complaint.updatedAt && (
-                                                <Typography variant="caption" display="block" color="text.secondary">
-                                                    Updated: {new Date(complaint.updatedAt).toLocaleString()}
-                                                    {complaint.updatedByName && ` by ${complaint.updatedByName}`}
-                                                </Typography>
-                                            )}
-                                        </Box>
-                                    </CardContent>
-                                    <Box p={2} pt={0} display="flex" justifyContent="flex-end" gap={1}>
-                                        <Button
-                                            size="small"
-                                            color="error"
-                                            variant="outlined"
-                                            onClick={() => handleDeleteClick(complaint.id)}
-                                        >
-                                            Delete
-                                        </Button>
-                                        <Button
-                                            size="small"
-                                            color="primary"
-                                            variant="outlined"
-                                            onClick={() => handleStatusClick(complaint)}
-                                        >
-                                            Status
-                                        </Button>
-                                    </Box>
-                                </Card>
+                <>
+                    <Grid container spacing={3}>
+                        {complaints.length === 0 ? (
+                            <Grid size={{ xs: 12 }}>
+                                <Box p={3} textAlign="center">
+                                    <Typography color="text.secondary">No complaints found.</Typography>
+                                </Box>
                             </Grid>
-                        ))
+                        ) : (
+                            complaints
+                                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                .map((complaint) => (
+                                    <Grid size={{ xs: 12, md: 6, lg: 4 }} key={complaint.id}>
+                                        <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                                            <CardContent sx={{ flexGrow: 1 }}>
+                                                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                                                    <Typography variant="h6" fontWeight="bold">
+                                                        #{complaint.id}
+                                                    </Typography>
+                                                    <Chip
+                                                        label={complaint.status}
+                                                        color={getStatusColor(complaint.status)}
+                                                        size="small"
+                                                    />
+                                                </Box>
+                                                <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+                                                    {complaint.title}
+                                                </Typography>
+                                                <Typography variant="body2" color="textSecondary" gutterBottom>
+                                                    Category: {complaint.category}
+                                                </Typography>
+                                                <Typography variant="body2" color="textSecondary">
+                                                    Location: {complaint.location}
+                                                </Typography>
+                                                <Typography variant="body2" color="textSecondary">
+                                                    Incident Date: {new Date(complaint.incidentDate).toLocaleDateString()}
+                                                </Typography>
+                                                <Typography variant="body2" color="textSecondary">
+                                                    Submitted By: {complaint.citizenName || "Unknown"}
+                                                </Typography>
+
+                                                <Box mt={2} pt={1} borderTop={1} borderColor="divider">
+                                                    <Typography variant="caption" display="block" color="text.secondary">
+                                                        Created: {new Date(complaint.createdAt).toLocaleString()}
+                                                    </Typography>
+                                                    {complaint.updatedAt && (
+                                                        <Typography variant="caption" display="block" color="text.secondary">
+                                                            Updated: {new Date(complaint.updatedAt).toLocaleString()}
+                                                            {complaint.updatedByName && ` by ${complaint.updatedByName}`}
+                                                        </Typography>
+                                                    )}
+                                                </Box>
+                                            </CardContent>
+                                            <Box p={2} pt={0} display="flex" justifyContent="flex-end" gap={1}>
+                                                <Button
+                                                    size="small"
+                                                    color="error"
+                                                    variant="outlined"
+                                                    onClick={() => handleDeleteClick(complaint.id)}
+                                                >
+                                                    Delete
+                                                </Button>
+                                                <Button
+                                                    size="small"
+                                                    color="primary"
+                                                    variant="outlined"
+                                                    onClick={() => handleStatusClick(complaint)}
+                                                >
+                                                    Status
+                                                </Button>
+                                            </Box>
+                                        </Card>
+                                    </Grid>
+                                ))
+                        )}
+                    </Grid>
+                    {complaints.length > 0 && (
+                        <TablePagination
+                            rowsPerPageOptions={[10]}
+                            component="div"
+                            count={complaints.length}
+                            rowsPerPage={rowsPerPage}
+                            page={page}
+                            onPageChange={handleChangePage}
+                            sx={{ mt: 2 }}
+                        />
                     )}
-                </Grid>
+                </>
             )}
 
             {/* Status Update Dialog */}

@@ -20,6 +20,13 @@ import { Search as SearchIcon, Receipt as ReceiptIcon, LocalPolice as PoliceIcon
 import { useSelector } from "react-redux";
 import { RootState } from "@/lib/store";
 import { checkUserForFine, issueFine } from "@/app/services/fineService";
+import dynamic from 'next/dynamic';
+
+const LocationPicker = dynamic(() => import('@/components/LocationPicker'), {
+    ssr: false,
+    loading: () => <Box sx={{ height: 250, bgcolor: 'rgba(255,255,255,0.03)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--fg-secondary)' }}>Loading Field Map...</Box>
+});
+
 
 export default function IssueFinePage() {
     const [nic, setNic] = useState("");
@@ -53,6 +60,8 @@ export default function IssueFinePage() {
         violationType: "",
         amount: 0,
         location: "",
+        latitude: undefined as number | undefined,
+        longitude: undefined as number | undefined,
     });
 
     const handleSearch = async () => {
@@ -94,13 +103,15 @@ export default function IssueFinePage() {
                 vehicleNumber: fineDetails.vehicleNumber,
                 violationType: fineDetails.violationType,
                 amount: fineDetails.amount,
-                location: fineDetails.location
+                location: fineDetails.location,
+                latitude: fineDetails.latitude,
+                longitude: fineDetails.longitude
             }, token);
 
             setSuccess("Fine issued successfully!");
             setCitizen(null);
             setNic("");
-            setFineDetails({ vehicleNumber: "", violationType: "", amount: 0, location: "" });
+            setFineDetails({ vehicleNumber: "", violationType: "", amount: 0, location: "", latitude: undefined, longitude: undefined });
         } catch (err: any) {
             setError(err.message || "Failed to issue fine");
         } finally {
@@ -280,17 +291,16 @@ export default function IssueFinePage() {
                                             '& .MuiInputBase-input': { color: 'var(--fg-main)', WebkitTextFillColor: 'var(--fg-main) !important' }
                                         }}
                                     />
-                                    <TextField
-                                        fullWidth
-                                        label="Location"
-                                        value={fineDetails.location}
-                                        onChange={(e) => setFineDetails({ ...fineDetails, location: e.target.value })}
-                                        sx={{
-                                            '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: 'rgba(255, 255, 255, 0.03)' },
-                                            '& .MuiInputLabel-root': { color: 'var(--fg-secondary)' },
-                                            '& .MuiInputBase-input': { color: 'var(--fg-main)' }
-                                        }}
-                                    />
+                                    <Box sx={{ mt: 1 }}>
+                                        <LocationPicker
+                                            label="Offense Location"
+                                            placeholder="Pinpoint location of violation"
+                                            value={fineDetails.location}
+                                            onChange={(addr, lat, lng) => setFineDetails({ ...fineDetails, location: addr, latitude: lat, longitude: lng })}
+                                            initialLat={fineDetails.latitude}
+                                            initialLng={fineDetails.longitude}
+                                        />
+                                    </Box>
                                 </Box>
                             </Box>
 

@@ -35,6 +35,13 @@ import { createComplaint } from '@/app/services/complaintService';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store';
 import { translations, Language } from './translations';
+import dynamic from 'next/dynamic';
+
+// Dynamically import LocationPicker to prevent SSR issues with Leaflet
+const LocationPicker = dynamic(() => import('@/components/LocationPicker'), {
+    ssr: false,
+    loading: () => <Box sx={{ height: 300, bgcolor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading Map...</Box>
+});
 // Importing specific sub-properties to satisfy type checker if needed, but 'translations' object is safer.
 
 export default function FileComplaintPage() {
@@ -54,6 +61,8 @@ export default function FileComplaintPage() {
         category: '',
         incidentDate: '',
         location: '',
+        latitude: undefined as number | undefined,
+        longitude: undefined as number | undefined,
         description: '',
     });
 
@@ -101,6 +110,18 @@ export default function FileComplaintPage() {
         setFormData(prev => ({ ...prev, [name as string]: value }));
         if (errors[name as string]) {
             setErrors((prev: any) => ({ ...prev, [name as string]: null }));
+        }
+    };
+
+    const handleLocationPickerChange = (address: string, lat?: number, lng?: number) => {
+        setFormData(prev => ({
+            ...prev,
+            location: address,
+            latitude: lat,
+            longitude: lng
+        }));
+        if (errors.location) {
+            setErrors((prev: any) => ({ ...prev, location: null }));
         }
     };
 
@@ -250,18 +271,15 @@ export default function FileComplaintPage() {
                             </Typography>
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                            <TextField
-                                fullWidth
+                            <LocationPicker
                                 label={t.locationLabel}
-                                name="location"
                                 placeholder={t.locationPlaceholder}
                                 value={formData.location}
-                                onChange={handleInputChange}
+                                onChange={handleLocationPickerChange}
                                 error={!!errors.location}
                                 helperText={errors.location}
-                                InputProps={{
-                                    startAdornment: <Box sx={{ mr: 1 }}>📍</Box>
-                                }}
+                                initialLat={formData.latitude}
+                                initialLng={formData.longitude}
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>

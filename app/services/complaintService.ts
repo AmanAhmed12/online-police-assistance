@@ -7,6 +7,8 @@ export interface Complaint {
     description: string;
     incidentDate: string;
     location: string;
+    latitude?: number;
+    longitude?: number;
     status: string;
     citizenId?: number;
     citizenName?: string;

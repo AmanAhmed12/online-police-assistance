@@ -49,6 +49,12 @@ import autoTable from 'jspdf-autotable';
 import { useSelector } from "react-redux";
 import { RootState } from "@/lib/store";
 import { Fine, getAllFines, updateFine, deleteFine } from "@/app/services/fineService";
+import dynamic from 'next/dynamic';
+
+const LocationPicker = dynamic(() => import('@/components/LocationPicker'), {
+    ssr: false,
+    loading: () => <Box sx={{ height: 250, bgcolor: 'rgba(255,255,255,0.03)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--fg-secondary)' }}>Loading Field Map...</Box>
+});
 
 export default function AdminFinesPage() {
     const [fines, setFines] = useState<Fine[]>([]);
@@ -71,6 +77,8 @@ export default function AdminFinesPage() {
         violationType: '',
         amount: 0,
         location: '',
+        latitude: undefined as number | undefined,
+        longitude: undefined as number | undefined,
         status: 'PENDING'
     });
 
@@ -120,6 +128,8 @@ export default function AdminFinesPage() {
             violationType: fine.violationType,
             amount: fine.amount,
             location: fine.location,
+            latitude: fine.latitude,
+            longitude: fine.longitude,
             status: fine.status
         });
         setEditDialogOpen(true);
@@ -603,12 +613,13 @@ export default function AdminFinesPage() {
                             value={editForm.amount}
                             onChange={(e) => setEditForm({ ...editForm, amount: Number(e.target.value) })}
                         />
-                        <TextField
-                            label="Location"
-                            fullWidth
-                            disabled
+                        <LocationPicker
+                            label="Incident Location"
+                            placeholder="Adjust location on map"
                             value={editForm.location}
-                            onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
+                            onChange={(addr, lat, lng) => setEditForm({ ...editForm, location: addr, latitude: lat, longitude: lng })}
+                            initialLat={editForm.latitude}
+                            initialLng={editForm.longitude}
                         />
                         <FormControl fullWidth>
                             <InputLabel>Status</InputLabel>

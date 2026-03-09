@@ -18,6 +18,17 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { RootState } from "@/lib/store";
 import { useSelector } from "react-redux";
 import { suspectService } from "@/services/suspectService";
+import dynamic from 'next/dynamic';
+
+const LocationPicker = dynamic(() => import('@/components/LocationPicker'), {
+    ssr: false,
+    loading: () => <Box sx={{ height: 300, bgcolor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading Forensic Map...</Box>
+});
+
+const LocationDisplay = dynamic(() => import('@/components/LocationDisplay'), {
+    ssr: false,
+    loading: () => <Box sx={{ height: 200, bgcolor: 'action.hover', borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading Map...</Box>
+});
 
 /* =======================
     DATA MODEL
@@ -29,6 +40,8 @@ interface Suspect {
     age: number | "";
     gender: string;
     lastSeenLocation: string;
+    latitude?: number;
+    longitude?: number;
     description: string;
     signs: string[];
     image: string;
@@ -81,7 +94,7 @@ export default function SuspectManagementPage() {
     const [deleteId, setDeleteId] = useState<number | null>(null);
 
     const initialFormState: Omit<Suspect, "id"> = {
-        name: "", nic: "", age: "", gender: "Male", lastSeenLocation: "", description: "", signs: [], image: "", crime: "Theft"
+        name: "", nic: "", age: "", gender: "Male", lastSeenLocation: "", latitude: undefined, longitude: undefined, description: "", signs: [], image: "", crime: "Theft"
     };
 
     const [formData, setFormData] = useState<Omit<Suspect, "id">>(initialFormState);
@@ -240,6 +253,16 @@ export default function SuspectManagementPage() {
                             <Typography><b>Age:</b> {currentSuspect.age || "-"}</Typography>
                             <Typography><b>Gender:</b> {currentSuspect.gender}</Typography>
                             <Typography><b>Last Seen:</b> {currentSuspect.lastSeenLocation}</Typography>
+                            {currentSuspect.latitude && currentSuspect.longitude && (
+                                <Box sx={{ mt: 2, mb: 2 }}>
+                                    <LocationDisplay
+                                        lat={currentSuspect.latitude}
+                                        lng={currentSuspect.longitude}
+                                        address={currentSuspect.lastSeenLocation}
+                                        height={200}
+                                    />
+                                </Box>
+                            )}
                             <Typography><b>Crime:</b> {currentSuspect.crime}</Typography>
                             <Box mt={2}>{currentSuspect.signs.map(sign => (<Chip key={sign} label={sign} sx={{ mr: 1, mb: 1 }} />))}</Box>
                         </>
@@ -276,7 +299,15 @@ export default function SuspectManagementPage() {
                                         {SAMPLE_CRIMES.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
                                     </TextField>
                                 </Stack>
-                                <TextField fullWidth label="Last Seen Location" disabled={isViewOnly} value={formData.lastSeenLocation} onChange={e => setFormData({ ...formData, lastSeenLocation: e.target.value })} />
+                                <LocationPicker
+                                    label="Last Seen Location"
+                                    placeholder="Drag pin to exact location"
+                                    disabled={isViewOnly}
+                                    value={formData.lastSeenLocation}
+                                    onChange={(addr, lat, lng) => setFormData({ ...formData, lastSeenLocation: addr, latitude: lat, longitude: lng })}
+                                    initialLat={formData.latitude}
+                                    initialLng={formData.longitude}
+                                />
                                 <TextField fullWidth multiline rows={3} label="Description" disabled={isViewOnly} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
                             </Stack>
                         </Grid>
