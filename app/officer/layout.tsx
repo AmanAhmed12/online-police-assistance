@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { ThemeProvider, CssBaseline, Box } from "@mui/material";
-import { darkTheme } from "@/components/theme";
+import { citizenTheme } from "@/components/citizen/CitizenTheme";
 import OfficerSidebar from "@/components/officer/OfficerSidebar";
 import OfficerTopbar from "@/components/officer/OfficerTopbar";
 
@@ -14,7 +14,7 @@ export default function OfficerLayout({
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     return (
-        <ThemeProvider theme={darkTheme}>
+        <ThemeProvider theme={citizenTheme}>
             <CssBaseline />
             <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: 'background.default' }}>
                 {/* Sidebar */}

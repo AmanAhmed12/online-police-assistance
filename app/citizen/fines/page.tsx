@@ -76,40 +76,127 @@ export default function MyFinesPage() {
     const token = useSelector((state: RootState) => state.auth.user?.token);
     const user = useSelector((state: RootState) => state.auth.user);
 
+    // useEffect(() => {
+    //     if (token) fetchFines();
+
+    //     // Handle Redirect Return from PayHere
+    //     const urlParams = new URLSearchParams(window.location.search);
+    //     const orderIdParam = urlParams.get('order_id');
+    //     if (orderIdParam && token) {
+    //         console.log("Detected return from PayHere, verifying order:", orderIdParam);
+    //         verifyPayment(parseInt(orderIdParam), "PAYHERE_RETURN_" + orderIdParam);
+    //         // Clear URL params
+    //         window.history.replaceState({}, '', window.location.pathname);
+    //     }
+
+    //     // Setup PayHere Global Listeners (For Modal)
+    //     if (typeof window !== 'undefined') {
+    //         (window as any).payhere = (window as any).payhere || {};
+
+    //         (window as any).payhere.onCompleted = function onCompleted(orderId: string) {
+    //             console.log("Payment completed. OrderID:" + orderId);
+    //             verifyPayment(parseInt(orderId), "PAYHERE_MODAL_" + orderId);
+    //         };
+
+    //         (window as any).payhere.onDismissed = function onDismissed() {
+    //             console.log("Payment dismissed");
+    //             setIsProcessing(false);
+    //         };
+
+    //         (window as any).payhere.onError = function onError(error: string) {
+    //             console.log("Error:" + error);
+    //             alert("Payment Error: " + error);
+    //             setIsProcessing(false);
+    //         };
+    //     }
+    // }, [token, user]);
+
     useEffect(() => {
-        if (token) fetchFines();
+        if (!token) return;
 
-        // Handle Redirect Return from PayHere
-        const urlParams = new URLSearchParams(window.location.search);
-        const orderIdParam = urlParams.get('order_id');
-        if (orderIdParam && token) {
-            console.log("Detected return from PayHere, verifying order:", orderIdParam);
-            verifyPayment(parseInt(orderIdParam), "PAYHERE_RETURN_" + orderIdParam);
-            // Clear URL params
-            window.history.replaceState({}, '', window.location.pathname);
-        }
+        fetchFines();
 
-        // Setup PayHere Global Listeners (For Modal)
-        if (typeof window !== 'undefined') {
-            (window as any).payhere = (window as any).payhere || {};
+        // -------------------------------
+        // 1. Handle redirect return safely
+        // -------------------------------
+        const handleRedirectReturn = () => {
+            if (typeof window === "undefined") return;
 
-            (window as any).payhere.onCompleted = function onCompleted(orderId: string) {
-                console.log("Payment completed. OrderID:" + orderId);
-                verifyPayment(parseInt(orderId), "PAYHERE_MODAL_" + orderId);
+            const urlParams = new URLSearchParams(window.location.search);
+
+            const orderIdParam =
+                urlParams.get("order_id") ||
+                urlParams.get("orderId");
+
+            const status =
+                urlParams.get("status") || urlParams.get("payment_status");
+
+            if (orderIdParam && token) {
+                console.log("Detected return from PayHere:", orderIdParam, status);
+
+                // avoid double verification
+                verifyPayment(
+                    parseInt(orderIdParam),
+                    "PAYHERE_RETURN_" + orderIdParam
+                );
+
+                // clean URL
+                window.history.replaceState(
+                    {},
+                    "",
+                    window.location.pathname
+                );
+            }
+        };
+
+        handleRedirectReturn();
+
+        // -------------------------------
+        // 2. Setup PayHere listeners safely
+        // -------------------------------
+        const setupPayHere = () => {
+            if (typeof window === "undefined") return;
+
+            const payhere = (window as any).payhere;
+
+            if (!payhere) {
+                console.warn("PayHere SDK not loaded yet");
+                return;
+            }
+
+            payhere.onCompleted = function (orderId: string) {
+                console.log("Payment completed:", orderId);
+
+                verifyPayment(
+                    parseInt(orderId),
+                    "PAYHERE_MODAL_" + orderId
+                );
             };
 
-            (window as any).payhere.onDismissed = function onDismissed() {
+            payhere.onDismissed = function () {
                 console.log("Payment dismissed");
                 setIsProcessing(false);
             };
 
-            (window as any).payhere.onError = function onError(error: string) {
-                console.log("Error:" + error);
-                alert("Payment Error: " + error);
+            payhere.onError = function (error: string) {
+                console.log("PayHere Error:", error);
+                setSnackbar({
+                    open: true,
+                    message: "Payment Error: " + error,
+                    severity: "error"
+                });
                 setIsProcessing(false);
             };
-        }
-    }, [token, user]);
+
+            console.log("PayHere listeners initialized");
+        };
+
+        // give SDK a moment to load
+        const timer = setTimeout(setupPayHere, 800);
+
+        return () => clearTimeout(timer);
+
+    }, [token]);
 
     const fetchFines = async () => {
         try {

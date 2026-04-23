@@ -8,6 +8,10 @@ import ArticleIcon from '@mui/icons-material/Article';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import WarningIcon from '@mui/icons-material/Warning';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import PhoneIcon from '@mui/icons-material/Phone';
+import AnnouncementIcon from '@mui/icons-material/Announcement';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import SmartToyIcon from '@mui/icons-material/SmartToy';
 import StatCard from '@/components/admin/StatCard'; // Keeping this reuse
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store';
@@ -71,7 +75,7 @@ export default function CitizenDashboardPage() {
                 <Button
                     variant="contained"
                     startIcon={<AddIcon />}
-                    href="/citizen/complaint/new"
+                    onClick={() => router.push('/citizen/complaint/new')}
                     aria-label="File New Complaint"
                     sx={{ px: 3, py: 1 }}
                 >
@@ -172,13 +176,115 @@ export default function CitizenDashboardPage() {
                         <Typography variant="h6" fontWeight="bold" gutterBottom>
                             Quick Access
                         </Typography>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-                            <Button variant="outlined" startIcon={<AssignmentIcon />} fullWidth sx={{ justifyContent: 'flex-start' }}>
-                                View Guidelines
-                            </Button>
-                            <Button variant="outlined" startIcon={<ArticleIcon />} fullWidth sx={{ justifyContent: 'flex-start' }}>
-                                Download Forms
-                            </Button>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.7, mt: 1 }}>
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1.5,
+                                    p: 1.5,
+                                    borderRadius: 2,
+                                    border: '1px solid',
+                                    borderColor: 'divider',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    '&:hover': { bgcolor: 'rgba(40, 102, 242, 0.05)', borderColor: 'primary.main' }
+                                }}
+                                onClick={() => router.push('/citizen/guidelines')}
+                            >
+                                <AssignmentIcon sx={{ color: 'primary.main' }} />
+                                <Typography variant="body2" fontWeight={500}>View Guidelines</Typography>
+                            </Box>
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 2,
+                                    p: 2,
+                                    borderRadius: 2,
+                                    border: '1px solid',
+                                    borderColor: 'divider',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    '&:hover': { bgcolor: 'rgba(40, 102, 242, 0.05)', borderColor: 'primary.main' }
+                                }}
+                                onClick={() => router.push('/citizen/report')}
+                            >
+                                <ArticleIcon sx={{ color: 'primary.main' }} />
+                                <Typography variant="body2" fontWeight={500}>Police Clearance</Typography>
+                            </Box>
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 2,
+                                    p: 2,
+                                    borderRadius: 2,
+                                    border: '1px solid',
+                                    borderColor: 'divider',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    '&:hover': { bgcolor: 'rgba(40, 102, 242, 0.05)', borderColor: 'primary.main' }
+                                }}
+                                onClick={() => router.push('/citizen/complaints')}
+                            >
+                                <HistoryIcon sx={{ color: 'primary.main' }} />
+                                <Typography variant="body2" fontWeight={500}>My Complaints</Typography>
+                            </Box>
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 2,
+                                    p: 2,
+                                    borderRadius: 2,
+                                    border: '1px solid',
+                                    borderColor: 'divider',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    '&:hover': { bgcolor: 'rgba(40, 102, 242, 0.05)', borderColor: 'primary.main' }
+                                }}
+                                onClick={() => router.push('/citizen/emergency')}
+                            >
+                                <PhoneIcon sx={{ color: 'primary.main' }} />
+                                <Typography variant="body2" fontWeight={500}>Emergency Line</Typography>
+                            </Box>
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 2,
+                                    p: 2,
+                                    borderRadius: 2,
+                                    border: '1px solid',
+                                    borderColor: 'divider',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    '&:hover': { bgcolor: 'rgba(40, 102, 242, 0.05)', borderColor: 'primary.main' }
+                                }}
+                                onClick={() => router.push('/citizen/notices')}
+                            >
+                                <AnnouncementIcon sx={{ color: 'primary.main' }} />
+                                <Typography variant="body2" fontWeight={500}>Official Notices</Typography>
+                            </Box>
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 2,
+                                    p: 2,
+                                    borderRadius: 2,
+                                    border: '1px solid',
+                                    borderColor: 'divider',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    '&:hover': { bgcolor: 'rgba(40, 102, 242, 0.05)', borderColor: 'primary.main' }
+                                }}
+                                onClick={() => router.push('/citizen/fines')}
+                            >
+                                <AccountBalanceIcon sx={{ color: 'primary.main' }} />
+                                <Typography variant="body2" fontWeight={500}>My Fines</Typography>
+                            </Box>
                         </Box>
                     </Paper>
                 </Grid>
