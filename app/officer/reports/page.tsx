@@ -39,7 +39,7 @@ export default function OfficerReportsManagement() {
     const [loading, setLoading] = useState(false);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-    // Dialog state
+
     const [openViewDialog, setOpenViewDialog] = useState(false);
     const [openUploadDialog, setOpenUploadDialog] = useState(false);
     const [openDeleteConfirmDialog, setOpenDeleteConfirmDialog] = useState(false);
@@ -49,7 +49,7 @@ export default function OfficerReportsManagement() {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
-    // Snackbar state
+
     const [snackbar, setSnackbar] = useState<{
         open: boolean;
         message: string;
@@ -74,7 +74,7 @@ export default function OfficerReportsManagement() {
             if (!token) return;
             setLoading(true);
             try {
-                // Fetching real reports using the actual Redux token
+
                 const data = await getAllReportRequests(token);
                 setReports(data);
             } catch (error) {
@@ -86,11 +86,34 @@ export default function OfficerReportsManagement() {
         fetchReports();
     }, [token]);
 
+    const handleDownload = async (pdfUrl?: string) => {
+        if (!pdfUrl) {
+            showMessage("The certificate is not available.", "info");
+            return;
+        }
+
+        try {
+            const response = await fetch(pdfUrl);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `police_certificate_${Date.now()}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode?.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Download failed:", error);
+            window.open(pdfUrl, '_blank');
+        }
+    };
+
     const handleAccept = async (id: string) => {
         if (!token) return;
         setActionLoading(id);
         try {
-            // Calling the real backend with the Redux token
+
             const updated = await updateReportStatus(id, "In Progress", token);
             setReports(prev => prev.map(r => r.id === id ? updated : r));
             showMessage("Application accepted successfully!");
@@ -121,7 +144,7 @@ export default function OfficerReportsManagement() {
         }
         setLoading(true);
         try {
-            // Calling the consolidated professional service with the Redux token
+
             const updatedReport = await finalizeReportRequest(selectedReport.id, selectedFile, token);
 
             setReports(prev => prev.map(r =>
@@ -331,7 +354,7 @@ export default function OfficerReportsManagement() {
                                                 {row.status?.toUpperCase() === 'PROCESSED' && row.pdfUrl && (
                                                     <Tooltip title="View Certificate">
                                                         <IconButton
-                                                            onClick={() => window.open(row.pdfUrl, '_blank')}
+                                                            onClick={() => handleDownload(row.pdfUrl)}
                                                             size="small"
                                                             sx={{ color: '#10b981', bgcolor: 'rgba(16, 185, 129, 0.05)' }}
                                                         >
@@ -460,7 +483,7 @@ export default function OfficerReportsManagement() {
                                 fullWidth
                                 variant="outlined"
                                 color="success"
-                                onClick={() => window.open(selectedReport.pdfUrl, '_blank')}
+                                onClick={() => handleDownload(selectedReport.pdfUrl)}
                                 startIcon={<PdfIcon />}
                                 sx={{ borderRadius: '12px', py: 1.5, fontWeight: 700 }}
                             >
