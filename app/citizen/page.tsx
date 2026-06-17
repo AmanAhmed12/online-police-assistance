@@ -12,7 +12,7 @@ import PhoneIcon from '@mui/icons-material/Phone';
 import AnnouncementIcon from '@mui/icons-material/Announcement';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
-import StatCard from '@/components/admin/StatCard'; // Keeping this reuse
+import StatCard from '@/components/admin/StatCard';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store';
 import { getMyComplaints, Complaint } from '@/app/services/complaintService';

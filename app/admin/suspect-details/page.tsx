@@ -9,7 +9,7 @@ import {
     TablePagination
 } from "@mui/material";
 
-// Icons
+
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -30,9 +30,7 @@ const LocationDisplay = dynamic(() => import('@/components/LocationDisplay'), {
     loading: () => <Box sx={{ height: 200, bgcolor: 'action.hover', borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading Map...</Box>
 });
 
-/* =======================
-    DATA MODEL
-======================= */
+
 interface Suspect {
     id: number;
     name: string;
@@ -56,7 +54,7 @@ export default function SuspectManagementPage() {
     const [suspects, setSuspects] = useState<Suspect[]>([]);
     const token = useSelector((state: RootState) => state.auth.user?.token);
 
-    // Pagination state
+   
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const handleChangePage = (event: unknown, newPage: number) => {
@@ -70,7 +68,7 @@ export default function SuspectManagementPage() {
 
     const paginatedSuspects = suspects.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-    // --- 1. INITIAL LOAD ---
+   
     const fetchSuspects = useCallback(async () => {
         try {
             const data = await suspectService.getAllSuspects(token);
@@ -84,7 +82,6 @@ export default function SuspectManagementPage() {
         if (token) fetchSuspects();
     }, [token, fetchSuspects]);
 
-    // DIALOG STATES
     const [openDialog, setOpenDialog] = useState(false);
     const [isViewOnly, setIsViewOnly] = useState(false);
     const [editId, setEditId] = useState<number | null>(null);
@@ -99,9 +96,7 @@ export default function SuspectManagementPage() {
 
     const [formData, setFormData] = useState<Omit<Suspect, "id">>(initialFormState);
 
-    /* =======================
-        HANDLERS
-    ======================= */
+   
 
     const handleOpenAdd = () => {
         setEditId(null);
@@ -160,19 +155,19 @@ export default function SuspectManagementPage() {
                 setSnackbar("Suspect added to registry successfully");
             }
             setOpenDialog(false);
-            fetchSuspects(); // Refresh list
+            fetchSuspects(); 
         } catch (error) {
             setSnackbar("Error saving record. Please check permissions.");
         }
     };
 
-    // --- 3. DELETE ---
+    
     const confirmDelete = async () => {
         if (deleteId === null) return;
         try {
             await suspectService.deleteSuspect(deleteId, token);
             setSnackbar("Suspect deleted successfully");
-            fetchSuspects(); // Refresh list
+            fetchSuspects(); 
         } catch (error) {
             setSnackbar("Failed to delete record");
         } finally {
@@ -182,7 +177,6 @@ export default function SuspectManagementPage() {
 
     return (
         <Box sx={{ p: 4 }}>
-            {/* 1. LIST VIEW HEADER */}
             <Stack direction="row" justifyContent="space-between" alignItems="center" mb={4}>
                 <Box>
                     <Typography variant="h4" fontWeight="800">Suspect Registry</Typography>
@@ -193,7 +187,6 @@ export default function SuspectManagementPage() {
                 </Button>
             </Stack>
 
-            {/* 2. LIST VIEW TABLE */}
             <Paper variant="outlined" sx={{ borderRadius: 3, overflow: "hidden" }}>
                 <TableContainer>
                     <Table>
@@ -241,7 +234,6 @@ export default function SuspectManagementPage() {
             </Paper>
 
 
-            {/* VIEW DIALOG */}
             <Dialog open={viewDialog} onClose={() => setViewDialog(false)} maxWidth="sm" fullWidth>
                 <DialogTitle>Suspect Details</DialogTitle>
                 <DialogContent dividers>
@@ -271,7 +263,6 @@ export default function SuspectManagementPage() {
             </Dialog>
 
 
-            {/* 3. UNIFIED DIALOG (Handles Add, Edit, and View) */}
             <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="lg" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
                 <DialogTitle sx={{ fontWeight: "800", pt: 3 }}>
                     {isViewOnly ? "View Suspect Details" : editId ? "Edit Suspect Record" : "Register New Suspect"}
@@ -356,7 +347,6 @@ export default function SuspectManagementPage() {
                 </DialogActions>
             </Dialog>
 
-            {/* DELETE CONFIRMATION */}
             <Dialog open={deleteId !== null} onClose={() => setDeleteId(null)} maxWidth="sm" fullWidth>
                 <DialogTitle>Confirm Delete</DialogTitle>
                 <DialogContent><Typography>Are you sure you want to delete this suspect?</Typography></DialogContent>

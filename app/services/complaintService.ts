@@ -26,7 +26,7 @@ export interface Complaint {
 
 const getAuthHeader = (token?: string) => ({
     Authorization: `Bearer ${token}`,
-    // 'Content-Type': 'application/json', // Handled dynamically
+    
 });
 
 export const createComplaint = async (data: any, images: File[] = [], token?: string) => {
@@ -146,7 +146,7 @@ export const getAllComplaints = async (token?: string) => {
 };
 
 export const assignOfficerToComplaint = async (complaintId: number, officerId: number, token?: string) => {
-    // Backend expects PATCH: /api/complaints/{id}/assign?officerId={officerId}
+   
     const response = await fetch(`${API_BASE_URL}/api/complaints/${complaintId}/assign?officerId=${officerId}`, {
         method: "PATCH",
         headers: {

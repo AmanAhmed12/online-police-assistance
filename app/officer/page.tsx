@@ -67,8 +67,7 @@ export default function OfficerDashboard() {
                 ).length;
 
                 const officerName = loggedInUser?.fullName;
-                // getMyFines for an officer typically returns the fines they issued.
-                // We'll calculate the sum of those fines directly.
+               
                 const finesSum = Array.isArray(finesData)
                     ? finesData.reduce((sum: number, f: any) => sum + (Number(f.amount) || 0), 0)
                     : 0;
@@ -97,7 +96,6 @@ export default function OfficerDashboard() {
         );
     }
 
-    // Combine recent activities for the timeline list
     const recentActivities = [
         ...duties.map(d => ({
             id: `duty-${d.id}`,
@@ -217,9 +215,7 @@ export default function OfficerDashboard() {
                 ))}
             </Grid>
 
-            {/* Layout Split: Progress Metrics & Timeline */}
             <Grid container spacing={4}>
-                {/* Advanced Progress Metrics instead of generic charts */}
                 <Grid size={{ xs: 12, md: 5 }}>
                     <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.5 }}>
                         <Typography variant="h5" fontWeight="bold" mb={3}>
@@ -281,7 +277,6 @@ export default function OfficerDashboard() {
                     </motion.div>
                 </Grid>
 
-                {/* Elegant Timeline List instead of a standard Table */}
                 <Grid size={{ xs: 12, md: 7 }}>
                     <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.6 }}>
                         <Typography variant="h5" fontWeight="bold" mb={3}>

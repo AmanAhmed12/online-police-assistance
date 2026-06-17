@@ -34,7 +34,7 @@ export default function NoticePage() {
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const token = useSelector((state: RootState) => state.auth.user?.token);
 
-    // --- State ---
+   
     const [notices, setNotices] = useState<Notice[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [openDialog, setOpenDialog] = useState(false);
@@ -50,7 +50,6 @@ export default function NoticePage() {
         category: 'General'
     });
 
-    // --- API Logic ---
     const fetchNotices = useCallback(async () => {
         if (!token) return;
         setFetching(true);
@@ -70,7 +69,6 @@ export default function NoticePage() {
         fetchNotices();
     }, [fetchNotices]);
 
-    // --- Handlers ---
     const handleOpenDialog = (notice?: Notice) => {
         if (notice) {
             setCurrentNotice(notice);
@@ -134,7 +132,6 @@ export default function NoticePage() {
         }
     };
 
-    // Helper to format dates safely
     const formatDate = (dateString?: string) => {
         if (!dateString) return "";
         return new Date(dateString).toLocaleDateString(undefined, {
@@ -253,9 +250,7 @@ export default function NoticePage() {
                                                     {notice.content}
                                                 </Typography>
 
-                                                {/* Meta Info Section */}
                                                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                                    {/* Creation Row */}
                                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, color: 'text.disabled', flexWrap: 'wrap' }}>
                                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                                             <CalendarIcon sx={{ fontSize: 16 }} />
@@ -270,7 +265,6 @@ export default function NoticePage() {
                                                         </Box>
                                                     </Box>
 
-                                                    {/* Update Row - Only shows if data exists */}
                                                     {(notice.updatedAt || notice.updatedBy) && (
                                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'info.main', opacity: 0.8 }}>
                                                             <HistoryIcon sx={{ fontSize: 14 }} />
@@ -384,7 +378,6 @@ export default function NoticePage() {
                 </DialogActions>
             </Dialog>
 
-            {/* Global Snackbar */}
             <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar({ ...snackbar, open: false })}>
                 <Alert severity={snackbar.severity} variant="filled">{snackbar.message}</Alert>
             </Snackbar>

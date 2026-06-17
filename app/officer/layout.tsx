@@ -30,7 +30,7 @@ export default function OfficerLayout({
                         flexGrow: 1,
                         display: 'flex',
                         flexDirection: 'column',
-                        width: { md: `calc(100% - 280px)` } // Adjust based on sidebar width
+                        width: { md: `calc(100% - 280px)` }
                     }}
                 >
                     <OfficerTopbar onSidebarOpen={() => setSidebarOpen(true)} />

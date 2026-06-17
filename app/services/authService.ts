@@ -36,7 +36,7 @@ export const registerUser = async (userData: any) => {
             const errorText = await response.text();
             throw new Error(errorText || "Registration failed");
         }
-        return true; // Or return response data if needed
+        return true; 
     } catch (error) {
         throw error;
     }
@@ -46,7 +46,7 @@ const getAuthHeader = (token?: string) => ({
     'Content-Type': 'application/json',
 });
 
-// Fetch users
+
 export const getUsers = async (token?: string) => {
     try {
         const response = await fetch(`${API_BASE_URL}/api/users`, {
@@ -62,7 +62,7 @@ export const getUsers = async (token?: string) => {
     }
 };
 
-// Update user
+
 export const updateUser = async (id: number, userData: any, token?: string) => {
     try {
         const response = await fetch(`${API_BASE_URL}/api/users/${id}`, {
@@ -82,7 +82,7 @@ export const updateUser = async (id: number, userData: any, token?: string) => {
     }
 };
 
-// Delete user
+
 export const deleteUser = async (id: number, token?: string) => {
     try {
         const response = await fetch(`${API_BASE_URL}/api/users/${id}`, {
@@ -124,27 +124,26 @@ export const logoutUser = async (token: string) => {
         if (!response.ok) {
             console.warn("Logout failed:", data);
         }
-        // Clear local storage regardless of backend response
+       
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         return data;
     } catch (error) {
         console.error("Logout error:", error);
-        // Even if backend logout fails, clear frontend state
+      
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         throw error;
     }
 };
 
-// Update user profile (supports profile picture upload)
 export const updateProfile = async (formData: FormData, token?: string) => {
     try {
         const response = await fetch(`${API_BASE_URL}/api/users/profile`, {
             method: "PUT",
             headers: {
                 Authorization: `Bearer ${token}`,
-                // Don't set Content-Type for FormData - browser will set it with boundary
+               
             },
             body: formData,
         });
@@ -160,7 +159,7 @@ export const updateProfile = async (formData: FormData, token?: string) => {
     }
 };
 
-// Get user profile
+
 export const getProfile = async (token?: string) => {
     try {
         const response = await fetch(`${API_BASE_URL}/api/users/profile`, {
@@ -182,7 +181,7 @@ export const getProfile = async (token?: string) => {
     }
 };
 
-// Change password
+
 export const changePassword = async (passwordData: { currentPassword: string; newPassword: string }, token?: string) => {
     try {
         const response = await fetch(`${API_BASE_URL}/api/users/change-password`, {

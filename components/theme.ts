@@ -3,20 +3,20 @@ import { createTheme } from "@mui/material";
 
 export const darkTheme = createTheme({
     palette: {
-        mode: "dark", // Enable dark mode features (e.g., default text/background)
+        mode: "dark", // Enable dark mode features
         primary: {
-            main: "#2866f2", // Your main dark blue
+            main: "#2866f2", // main dark blue
             light: "#6699ff",
             dark: "#1741a6",
             contrastText: "#ffffff",
         },
         secondary: {
-            main: "#f5f7ff", // Your main white/off-white
+            main: "#f5f7ff", //main white/off-white
             light: "#ffffff",
             dark: "#cccccc",
             contrastText: "#000000",
         },
-        error: { // Good to define for form validation
+        error: { 
             main: '#ef5350',
         },
         background: {
@@ -29,7 +29,7 @@ export const darkTheme = createTheme({
         },
     },
     typography: {
-        fontFamily: "Roboto, sans-serif", // Or your preferred font (e.g., 'Inter', 'sans-serif')
+        fontFamily: "Roboto, sans-serif", 
         h5: {
             fontWeight: 700,
             color: "#2866f2", // Specific color for "Welcome Back"

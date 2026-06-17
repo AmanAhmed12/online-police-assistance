@@ -6,7 +6,7 @@ import 'leaflet/dist/leaflet.css';
 import { TextField, Box, Typography, CircularProgress, IconButton } from '@mui/material';
 import MyLocationIcon from '@mui/icons-material/MyLocation';
 
-// Fix for default marker icon in Leaflet + Next.js
+
 const defaultIcon = L.icon({
     iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
     iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -19,19 +19,17 @@ const defaultIcon = L.icon({
 L.Marker.prototype.options.icon = defaultIcon;
 
 interface LocationPickerProps {
-    value: string; // The text address
+    value: string;
     onChange: (location: string, lat?: number, lng?: number) => void;
     error?: boolean;
     helperText?: React.ReactNode;
     label?: string;
     placeholder?: string;
-    // Optional initial coordinates (e.g. for edit mode)
     initialLat?: number;
     initialLng?: number;
     disabled?: boolean;
 }
 
-// Center of Sri Lanka
 const DEFAULT_CENTER: [number, number] = [7.8731, 80.7718];
 const DEFAULT_ZOOM = 8;
 const SRI_LANKA_BOUNDS: L.LatLngBoundsExpression = [
@@ -56,7 +54,6 @@ export default function LocationPicker({
     const [loading, setLoading] = useState(false);
     const mapRef = useRef<L.Map | null>(null);
 
-    // Reverse Geocode when position changes
     useEffect(() => {
         if (!position || disabled) return;
 
@@ -67,7 +64,7 @@ export default function LocationPicker({
                 const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
                 const data = await res.json();
                 if (data && data.display_name) {
-                    // Extract a clean but detailed address (e.g., skip the super long country details if possible, or just use display_name)
+                   
                     const cleanAddress = data.display_name;
                     onChange(cleanAddress, lat, lng);
                 }
@@ -78,13 +75,13 @@ export default function LocationPicker({
             }
         };
 
-        // Debounce slightly to avoid spamming the API while dragging
+       
         const timeoutId = setTimeout(fetchAddress, 800);
         return () => clearTimeout(timeoutId);
-    }, [position]); // We deliberately don't include onChange here to prevent infinite loops if parent re-renders
+    }, [position]); 
 
 
-    // Component to handle map clicks and move the marker
+   
     const LocationMarker = () => {
         useMapEvents({
             click(e) {

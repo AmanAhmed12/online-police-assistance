@@ -137,7 +137,7 @@ export default function CitizenEmergencyPage() {
                                                 width: 64,
                                                 height: 64,
                                                 borderRadius: '50%',
-                                                bgcolor: `${getTypeColor(contact.type)}15`, // 15% opacity
+                                                bgcolor: `${getTypeColor(contact.type)}15`, 
                                                 color: getTypeColor(contact.type),
                                                 display: 'flex',
                                                 alignItems: 'center',

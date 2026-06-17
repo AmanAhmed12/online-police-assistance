@@ -44,7 +44,7 @@ export default function MyFinesPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    // Payment State
+    
     const [selectedFine, setSelectedFine] = useState<Fine | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [snackbar, setSnackbar] = useState({
@@ -53,7 +53,7 @@ export default function MyFinesPage() {
         severity: "success" as "success" | "error"
     });
 
-    // Pagination State
+   
     const [pendingPage, setPendingPage] = useState(0);
     const [historyPage, setHistoryPage] = useState(0);
     const rowsPerPage = 10;
@@ -61,7 +61,7 @@ export default function MyFinesPage() {
     const pendingFines = fines.filter(f => f.status === "PENDING");
     const paidFines = fines.filter(f => f.status === "PAID");
 
-    // Reset pagination if page is out of bounds (e.g. after payment)
+    
     useEffect(() => {
         const maxPendingPage = Math.max(0, Math.ceil(pendingFines.length / rowsPerPage) - 1);
         if (pendingPage > maxPendingPage) {
@@ -116,9 +116,7 @@ export default function MyFinesPage() {
 
         fetchFines();
 
-        // -------------------------------
-        // 1. Handle redirect return safely
-        // -------------------------------
+       
         const handleRedirectReturn = () => {
             if (typeof window === "undefined") return;
 
@@ -134,13 +132,13 @@ export default function MyFinesPage() {
             if (orderIdParam && token) {
                 console.log("Detected return from PayHere:", orderIdParam, status);
 
-                // avoid double verification
+                
                 verifyPayment(
                     parseInt(orderIdParam),
                     "PAYHERE_RETURN_" + orderIdParam
                 );
 
-                // clean URL
+                
                 window.history.replaceState(
                     {},
                     "",
@@ -151,9 +149,7 @@ export default function MyFinesPage() {
 
         handleRedirectReturn();
 
-        // -------------------------------
-        // 2. Setup PayHere listeners safely
-        // -------------------------------
+        
         const setupPayHere = () => {
             if (typeof window === "undefined") return;
 
@@ -191,7 +187,7 @@ export default function MyFinesPage() {
             console.log("PayHere listeners initialized");
         };
 
-        // give SDK a moment to load
+        
         const timer = setTimeout(setupPayHere, 800);
 
         return () => clearTimeout(timer);
@@ -214,7 +210,7 @@ export default function MyFinesPage() {
         setIsProcessing(true);
 
         try {
-            // 1. Get Hash from our internal API
+            
             const hashResponse = await fetch("/api/payhere/hash", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -228,7 +224,7 @@ export default function MyFinesPage() {
             if (!hashResponse.ok) throw new Error("Failed to generate payment hash");
             const { hash } = await hashResponse.json();
 
-            // 2. Prepare PayHere Object
+            
             const payment = {
                 sandbox: true,
                 merchant_id: process.env.NEXT_PUBLIC_PAYHERE_MERCHANT_ID,
@@ -249,7 +245,7 @@ export default function MyFinesPage() {
                 hash: hash
             };
 
-            // 3. Start Payment
+            
             (window as any).payhere.startPayment(payment);
         } catch (err) {
             console.error(err);
@@ -265,11 +261,11 @@ export default function MyFinesPage() {
             const result = await verifyFinePayment(fineId, paymentId, token);
             console.log("Verification success:", result);
             setSnackbar({ open: true, message: "Payment successful! Your fine has been marked as PAID.", severity: "success" });
-            fetchFines(); // Refresh list
+            fetchFines(); 
             setIsProcessing(false);
         } catch (error: any) {
             console.error("Payment verification error", error);
-            // Enhanced logging to capture redirect or other issues
+            
             if (error instanceof Error) {
                 console.error("Error Message:", error.message);
             }

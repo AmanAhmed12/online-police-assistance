@@ -363,7 +363,6 @@ import {
     alpha
 } from '@mui/material';
 
-// Define User Interface
 interface User {
     id: number;
     fullName: string;
@@ -383,7 +382,7 @@ export default function UsersPage() {
     const loggedInUser = useSelector((state: RootState) => state.auth.user);
     const token = loggedInUser?.token;
 
-    // Pagination state
+   
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -402,11 +401,9 @@ export default function UsersPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-    // Messaging State
     const [openMessageDialog, setOpenMessageDialog] = useState(false);
     const [targetUser, setTargetUser] = useState<User | null>(null);
 
-    // Filter State
     const [searchQuery, setSearchQuery] = useState('');
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -428,11 +425,9 @@ export default function UsersPage() {
     const [fetchingHistory, setFetchingHistory] = useState(false);
     const [sendingMessage, setSendingMessage] = useState(false);
 
-    // History Modal State
     const [historyOpen, setHistoryOpen] = useState(false);
     const [historyTarget, setHistoryTarget] = useState<{ id: number; fullName: string } | null>(null);
 
-    // Snackbar State
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error' | 'info' | 'warning'>('success');
@@ -441,7 +436,6 @@ export default function UsersPage() {
         setSnackbarOpen(false);
     };
 
-    // Fetch users
     const fetchUsers = async () => {
         setLoading(true);
         try {
@@ -471,7 +465,6 @@ export default function UsersPage() {
 
     const paginatedUsers = filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-    // Normalize Role and Status
     const normalizeRole = (role: string) => {
         if (!role) return '';
         const formatted = role.toLowerCase();
@@ -490,7 +483,6 @@ export default function UsersPage() {
         return '';
     };
 
-    // Open dialog for add/edit
     const handleOpenDialog = (user?: User) => {
         if (user) {
             setCurrentUser(user);
@@ -557,7 +549,6 @@ export default function UsersPage() {
         try {
             await sendNotification(targetUser.id, messageText, token);
             setMessageText("");
-            // Refresh history
             const history = await getChatHistory(targetUser.id, token);
             setChatHistory(history);
             setSnackbarMessage(`Message sent to ${targetUser.fullName}`);
@@ -572,7 +563,6 @@ export default function UsersPage() {
         }
     };
 
-    // Input handlers
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -583,7 +573,6 @@ export default function UsersPage() {
         setFormData(prev => ({ ...prev, [name as string]: value }));
     };
 
-    // Save user (add/update)
     const handleSave = async () => {
         if (!currentUser && formData.password !== formData.confirmPassword) {
             setSnackbarMessage("Passwords do not match");
@@ -618,7 +607,6 @@ export default function UsersPage() {
         }
     };
 
-    // Delete handlers
     const handleDeleteClick = (id: number) => {
         setUserToDelete(id);
         setOpenDeleteDialog(true);
@@ -659,7 +647,6 @@ export default function UsersPage() {
                 </Button>
             </Box>
 
-            {/* Search Section */}
             <Paper sx={{ p: 2, mb: 3, borderRadius: 2 }}>
                 <Grid container spacing={2} alignItems="center">
                     <Grid size={{ xs: 12 }}>
@@ -690,7 +677,6 @@ export default function UsersPage() {
                 </Grid>
             </Paper>
 
-            {/* Users Table */}
             <Paper sx={{ mt: 3, overflow: 'hidden' }}>
                 <TableContainer>
                     <Table>
@@ -780,7 +766,6 @@ export default function UsersPage() {
                 />
             </Paper>
 
-            {/* Add/Edit User Dialog */}
             <Dialog open={openDialog} onClose={handleCloseDialog} fullWidth maxWidth="sm">
                 <DialogTitle>{currentUser ? 'Edit User' : 'Add New User'}</DialogTitle>
                 <DialogContent>
@@ -808,7 +793,7 @@ export default function UsersPage() {
                             name="username"
                             value={formData.username}
                             onChange={handleInputChange}
-                            disabled={!!currentUser} // Disable if editing
+                            disabled={!!currentUser}
                         />
                         <TextField
                             margin="normal"
@@ -817,7 +802,7 @@ export default function UsersPage() {
                             name="email"
                             value={formData.email}
                             onChange={handleInputChange}
-                            disabled={!!currentUser} // Disable if editing
+                            disabled={!!currentUser}
                         />
                         {!currentUser && (
                             <TextField
@@ -905,7 +890,6 @@ export default function UsersPage() {
                 </DialogActions>
             </Dialog>
 
-            {/* Delete Confirmation Dialog */}
             <Dialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)}>
                 <DialogTitle>Confirm Delete</DialogTitle>
                 <DialogContent>
@@ -921,7 +905,7 @@ export default function UsersPage() {
                 </DialogActions>
             </Dialog>
 
-            {/* Success Snackbar */}
+           
             <Snackbar
                 open={snackbarOpen}
                 autoHideDuration={4000}
@@ -933,7 +917,7 @@ export default function UsersPage() {
                 </Alert>
             </Snackbar>
 
-            {/* Message User Dialog */}
+          
             <Dialog
                 open={openMessageDialog}
                 onClose={() => setOpenMessageDialog(false)}

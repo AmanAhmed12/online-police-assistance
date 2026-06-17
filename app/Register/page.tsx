@@ -28,7 +28,6 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { useRouter } from "next/navigation";
 
-/* ===== Theme (UNCHANGED) ===== */
 const darkTheme = createTheme({
   palette: {
     mode: "dark",
@@ -129,7 +128,6 @@ export default function RegisterPage() {
 
   const [loading, setLoading] = useState(false);
 
-  // Dialog State
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState("");
   const [dialogMessage, setDialogMessage] = useState("");
