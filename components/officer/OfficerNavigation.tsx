@@ -17,6 +17,6 @@ export const officerNavigation = [
     { name: "Reports", href: "/officer/reports", icon: <ReportIcon /> },
     { name: "Issue Fine", href: "/officer/fines", icon: <ReceiptIcon /> },
     { name: "Notices", href: "/officer/notices", icon: <CampaignIcon /> },
-    { name: "Emergency Contacts", href: "/admin/emergency-contacts", icon: <ContactPhoneIcon /> },
+    { name: "Emergency Contacts", href: "/officer/emergency-contacts", icon: <ContactPhoneIcon /> },
     { name: "Settings", href: "/officer/settings", icon: <SettingsIcon /> },
 ];
