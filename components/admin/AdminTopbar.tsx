@@ -173,8 +173,8 @@ export default function AdminTopbar({ onSidebarOpen }: AdminTopbarProps) {
                                 }
                             }}
                         >
-                            <MenuItem onClick={handleMenuClose}>Profile</MenuItem>
-                            <MenuItem onClick={handleMenuClose}>My account</MenuItem>
+                            <MenuItem disabled >Profile</MenuItem>
+                            <MenuItem disabled >My account</MenuItem>
                             <Divider />
                             <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>Logout</MenuItem>
                         </Menu>
