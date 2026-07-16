@@ -75,10 +75,10 @@ export default function AdminDashboardPage() {
         ? (((thisWeekCount - lastWeekCount) / lastWeekCount) * 100).toFixed(1)
         : (thisWeekCount > 0 ? "100" : "0.0");
 
-    const thisWeekResolvedCount = complaintData.filter(c => 
+    const thisWeekResolvedCount = complaintData.filter(c =>
         (c.status === 'RESOLVED' || c.status === 'Resolved') && isAfter(new Date(c.createdAt), sevenDaysAgo)
     ).length;
-    
+
     const lastWeekResolvedCount = complaintData.filter(c =>
         (c.status === 'RESOLVED' || c.status === 'Resolved') &&
         isAfter(new Date(c.createdAt), fourteenDaysAgo) &&
@@ -87,7 +87,7 @@ export default function AdminDashboardPage() {
 
     const thisWeekResolutionRate = thisWeekCount > 0 ? (thisWeekResolvedCount / thisWeekCount) * 100 : 0;
     const lastWeekResolutionRate = lastWeekCount > 0 ? (lastWeekResolvedCount / lastWeekCount) * 100 : 0;
-    
+
     const resolutionTrendValue = (thisWeekResolutionRate - lastWeekResolutionRate).toFixed(1);
     const resolutionTrend = Number(resolutionTrendValue) >= 0 ? `+${resolutionTrendValue}%` : `${resolutionTrendValue}%`;
 
@@ -112,9 +112,7 @@ export default function AdminDashboardPage() {
     const serverLoad = Math.min(100, Math.max(10, Math.round((activeComplaints / (totalComplaints || 1)) * 100)));
     const databaseStorage = Math.min(100, Math.max(15, Math.round((userData.length / 50) * 100)));
 
-    useEffect(() => {
-        console.log(activeComplaints, totalComplaints, complaintData.length, solvedComplaints);
-    }, [complaintData]);
+
 
     useEffect(() => {
 
