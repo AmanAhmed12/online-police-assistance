@@ -63,7 +63,7 @@ export default function RecentActivityTable({ complaints, reports, loading }: Re
 
     const getStatusColor = (status: string) => {
         const s = status.toLowerCase().replace(/_/g, ' ');
-        if (s === 'completed' || s === 'solved' || s === 'processed') return { bg: 'rgba(0, 230, 118, 0.1)', color: '#00e676' };
+        if (s === 'completed' || s === 'resolved' || s === 'processed') return { bg: 'rgba(0, 230, 118, 0.1)', color: '#00e676' };
         if (s === 'pending') return { bg: 'rgba(255, 179, 0, 0.1)', color: '#ffb300' };
         if (s === 'in progress' || s === 'in investigation' || s === 'under investigation') return { bg: 'rgba(33, 150, 243, 0.1)', color: '#2196f3' };
         if (s === 'failed' || s === 'rejected') return { bg: 'rgba(255, 23, 68, 0.1)', color: '#ff1744' };
