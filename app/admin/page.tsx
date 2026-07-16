@@ -75,6 +75,22 @@ export default function AdminDashboardPage() {
         ? (((thisWeekCount - lastWeekCount) / lastWeekCount) * 100).toFixed(1)
         : (thisWeekCount > 0 ? "100" : "0.0");
 
+    const thisWeekResolvedCount = complaintData.filter(c => 
+        (c.status === 'RESOLVED' || c.status === 'Resolved') && isAfter(new Date(c.createdAt), sevenDaysAgo)
+    ).length;
+    
+    const lastWeekResolvedCount = complaintData.filter(c =>
+        (c.status === 'RESOLVED' || c.status === 'Resolved') &&
+        isAfter(new Date(c.createdAt), fourteenDaysAgo) &&
+        isBefore(new Date(c.createdAt), sevenDaysAgo)
+    ).length;
+
+    const thisWeekResolutionRate = thisWeekCount > 0 ? (thisWeekResolvedCount / thisWeekCount) * 100 : 0;
+    const lastWeekResolutionRate = lastWeekCount > 0 ? (lastWeekResolvedCount / lastWeekCount) * 100 : 0;
+    
+    const resolutionTrendValue = (thisWeekResolutionRate - lastWeekResolutionRate).toFixed(1);
+    const resolutionTrend = Number(resolutionTrendValue) >= 0 ? `+${resolutionTrendValue}%` : `${resolutionTrendValue}%`;
+
 
     const processedComplaints = complaintData.filter(c => c.updatedAt && c.createdAt !== c.updatedAt);
     const totalResponseTime = processedComplaints.reduce((acc, c) => {
@@ -304,8 +320,8 @@ export default function AdminDashboardPage() {
                     <StatCard
                         title="Resolution Rate"
                         value={`${resolutionRate}%`}
-                        trend="+2.3%"
-                        isPositive
+                        trend={resolutionTrend}
+                        isPositive={Number(resolutionTrendValue) >= 0}
                         icon={<CheckCircleIcon />}
                         color="#00e676"
                     />
