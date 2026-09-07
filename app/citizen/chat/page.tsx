@@ -102,7 +102,15 @@ export default function AIChatPage() {
             });
 
             if (!response.ok) {
-                throw new Error('API request failed');
+                let errorMsg = 'API request failed';
+                try {
+                    const errorData = await response.json();
+                    if (errorData.reply) errorMsg = errorData.reply;
+                    else if (errorData.error) errorMsg = errorData.error;
+                } catch (e) {
+                    // Ignore JSON parse error
+                }
+                throw new Error(errorMsg);
             }
 
             const data = await response.json();
@@ -125,11 +133,11 @@ export default function AIChatPage() {
                 setMessages(prev => [...prev, aiMessage]);
             }
 
-        } catch (error) {
+        } catch (error: any) {
             console.error("Chat Error:", error);
             const errorMessage: Message = {
                 id: Date.now() + 1,
-                text: "⚠️ **Network Error:** Could not connect to the Law AI service. Please check your internet connection or verify the backend status.",
+                text: `⚠️ **Error:** ${error.message || "Could not connect to the Law AI service. Please check your internet connection or verify the backend status."}`,
                 sender: 'ai',
                 timestamp: new Date()
             };
