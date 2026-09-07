@@ -17,6 +17,9 @@ import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import LockResetOutlinedIcon from "@mui/icons-material/LockResetOutlined";
 import KeyboardBackspaceIcon from "@mui/icons-material/KeyboardBackspace";
 import { useRouter } from "next/navigation";
+import { forgotPassword } from "@/services/authService";
+import CircularProgress from '@mui/material/CircularProgress';
+import Alert from '@mui/material/Alert';
 
 const darkTheme = createTheme({
   palette: {
@@ -93,11 +96,22 @@ const darkTheme = createTheme({
 export default function ForgotPasswordPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
-    console.log("Reset link sent to:", email);
-    alert("Password reset link sent (demo)");
+    setLoading(true);
+    setMessage(null);
+    try {
+      await forgotPassword(email);
+      setMessage({ type: "success", text: "A temporary password has been sent to your email. Please check your inbox." });
+      setEmail("");
+    } catch (error: any) {
+      setMessage({ type: "error", text: error.message || "Failed to process request." });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -137,9 +151,15 @@ export default function ForgotPasswordPage() {
               Forgot Password
             </Typography>
             <Typography variant="subtitle1">
-              Enter your email to receive a reset link
+              Enter your email to receive a temporary password
             </Typography>
           </Box>
+
+          {message && (
+            <Alert severity={message.type} sx={{ mb: 2 }}>
+              {message.text}
+            </Alert>
+          )}
 
           <form onSubmit={handleSubmit}>
             <TextField
@@ -164,8 +184,9 @@ export default function ForgotPasswordPage() {
               type="submit"
               variant="contained"
               sx={{ mt: 3 }}
+              disabled={loading}
             >
-              Send Reset Link
+              {loading ? <CircularProgress size={24} color="inherit" /> : "Request Temporary Password"}
             </Button>
           </form>
 

@@ -185,6 +185,18 @@ export default function LoginPage() {
                 ),
               }}
             />
+            <Box display="flex" justifyContent="flex-end" mt={1}>
+              <a href="/ForgotPassword"
+                style={{
+                  color: darkTheme.palette.primary.main,
+                  textDecoration: 'none',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                }}
+              >
+                Forgot Password?
+              </a>
+            </Box>
             <Button
               type="submit"
               fullWidth

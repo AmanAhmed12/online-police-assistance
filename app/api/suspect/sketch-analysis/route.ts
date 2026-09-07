@@ -26,9 +26,9 @@ export async function POST(req: Request) {
             if (match) mimeType = match[1];
         }
 
-        
-        
-        const modelNames = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-latest"];
+
+
+        const modelNames = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-flash-latest"];
         let analysis = '';
         let lastError = null;
 
@@ -73,6 +73,6 @@ export async function POST(req: Request) {
         return NextResponse.json({
             analysis: "Forensic sketch generated via neural canvas algorithms. Identity verified against database signatures.",
             error: error.message
-        }, { status: 200 }); 
+        }, { status: 200 });
     }
 }

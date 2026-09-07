@@ -21,6 +21,26 @@ export const loginUser = async (credentials: any) => {
     }
 };
 
+export const forgotPassword = async (email: string) => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email }),
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || "Failed to process forgot password request");
+        }
+        return await response.text();
+    } catch (error) {
+        throw error;
+    }
+};
+
 
 export const registerUser = async (userData: any) => {
     try {
