@@ -118,7 +118,7 @@ export default function AIChatPage() {
             if (data.error) {
                 const errorMessage: Message = {
                     id: Date.now() + 1,
-                    text: `**ERROR:** ${data.error}. Please ensure the backend server and Ollama API are correctly configured and running.`,
+                    text: `**ERROR:** ${data.error}. Please ensure the backend server and Gemini API key are correctly configured and running.`,
                     sender: 'ai',
                     timestamp: new Date()
                 };
@@ -198,7 +198,7 @@ export default function AIChatPage() {
                             Law AI Assistant
                         </Typography>
                         <Typography variant="caption" color="text.secondary" display="flex" alignItems="center" gap={0.5}>
-                            <AutoAwesomeIcon sx={{ fontSize: 12, color: theme.palette.primary.main }} /> Powered by Ollama (llama3) RAG
+                            <AutoAwesomeIcon sx={{ fontSize: 12, color: theme.palette.primary.main }} /> Powered by Google Gemini 3.5 Flash RAG
                         </Typography>
                     </Box>
                 </Box>
