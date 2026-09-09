@@ -198,7 +198,7 @@ export default function AIChatPage() {
                             Law AI Assistant
                         </Typography>
                         <Typography variant="caption" color="text.secondary" display="flex" alignItems="center" gap={0.5}>
-                            <AutoAwesomeIcon sx={{ fontSize: 12, color: theme.palette.primary.main }} /> Powered by Google Gemini 3.5 Flash RAG
+                            <AutoAwesomeIcon sx={{ fontSize: 12, color: theme.palette.primary.main }} /> Powered by Google Gemini 2.5 Flash RAG
                         </Typography>
                     </Box>
                 </Box>
